@@ -7,34 +7,32 @@
 <link rel="manifest" href="data:application/manifest+json,{}">
 <style>
   :root{
-    --paper:#E9E3D0;
-    --paper-dark:#DCD3B8;
-    --paper-darker:#CFC5A4;
-    --ink:#2B2A25;
-    --ink-soft:#5B584C;
-    --highway:#29506B;
-    --highway-ink:#EAF0F4;
-    --rust:#B5502A;
-    --eucalypt:#5F7A45;
+    --paper:#F6F3EC;
+    --paper-dark:#FFFFFF;
+    --paper-darker:#ECE7DA;
+    --ink:#211F1B;
+    --ink-soft:#79726A;
+    --highway:#E2632A;
+    --highway-ink:#FFFFFF;
+    --rust:#C1502B;
+    --eucalypt:#3F8F5C;
     --ochre:#C98A2C;
-    --line:#B7AE92;
-    --danger:#9E3B2E;
-    --radius:2px;
+    --line:#E7E1D2;
+    --danger:#C0392B;
+    --radius:14px;
+    --shadow-sm:0 1px 2px rgba(33,31,27,0.05), 0 2px 6px rgba(33,31,27,0.06);
+    --shadow-md:0 4px 16px rgba(33,31,27,0.10);
+    --shadow-lg:0 14px 36px rgba(33,31,27,0.20);
   }
   *{box-sizing:border-box;}
   html,body{height:100%;}
   body{
     margin:0;
     background:var(--paper);
-    background-image:
-      linear-gradient(var(--line) 1px, transparent 1px),
-      linear-gradient(90deg, var(--line) 1px, transparent 1px);
-    background-size:28px 28px;
-    background-attachment:fixed;
     color:var(--ink);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     -webkit-tap-highlight-color:transparent;
-    padding-bottom:84px;
+    padding-bottom:88px;
   }
   @media (prefers-reduced-motion: reduce){
     *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
@@ -43,114 +41,125 @@
 
   h1,h2,h3{margin:0;}
   .display{
-    font-family:"Courier New",ui-monospace,monospace;
-    text-transform:uppercase;
-    letter-spacing:0.14em;
-    font-weight:700;
+    font-family:inherit;
+    text-transform:none;
+    letter-spacing:-0.01em;
+    font-weight:800;
   }
 
   header.top{
     position:sticky; top:0; z-index:20;
-    background:var(--paper);
-    border-bottom:2px solid var(--ink);
-    padding:14px 16px 10px;
+    background:var(--paper-dark);
+    box-shadow:var(--shadow-sm);
+    border-radius:0 0 20px 20px;
+    padding:16px 16px 12px;
   }
   header.top .titlerow{
-    display:flex; align-items:baseline; justify-content:space-between;
+    display:flex; align-items:center; justify-content:space-between;
   }
   header.top .titlerow h1{
-    font-size:20px;
+    font-size:22px;
   }
   header.top .titlerow .sub{
-    font-size:10px; letter-spacing:0.12em; color:var(--ink-soft); text-transform:uppercase;
+    font-size:10px; letter-spacing:0.04em; color:var(--ink-soft); text-transform:uppercase;
+    font-weight:700; background:var(--paper-darker); padding:4px 10px; border-radius:999px;
   }
 
   .odometer{
-    margin-top:12px;
+    margin-top:14px;
     display:grid;
     grid-template-columns:repeat(4,1fr);
-    gap:1px;
-    background:var(--ink);
-    border:1px solid var(--ink);
+    gap:8px;
   }
   .odometer .cell{
-    background:var(--paper-dark);
-    padding:8px 4px 7px;
+    background:var(--paper-darker);
+    border-radius:12px;
+    padding:9px 4px 8px;
     text-align:center;
   }
   .odometer .cell .val{
-    font-family:ui-monospace,"Courier New",monospace;
     font-variant-numeric:tabular-nums;
     font-size:18px;
-    font-weight:700;
-    letter-spacing:0.02em;
+    font-weight:800;
+    letter-spacing:-0.01em;
+    color:var(--ink);
   }
   .odometer .cell .lbl{
     margin-top:2px;
     font-size:8.5px;
-    letter-spacing:0.1em;
+    letter-spacing:0.07em;
     text-transform:uppercase;
+    font-weight:600;
     color:var(--ink-soft);
   }
 
   nav.tabs{
     display:flex;
-    border-bottom:1px solid var(--ink);
-    margin-top:12px;
-    gap:0;
+    margin-top:14px;
+    gap:2px;
+    background:var(--paper-darker);
+    border-radius:999px;
+    padding:3px;
   }
   nav.tabs button{
     flex:1;
     background:none;
     border:none;
-    border-bottom:3px solid transparent;
-    padding:9px 2px 8px;
+    border-radius:999px;
+    padding:8px 2px;
     font-size:10.5px;
-    letter-spacing:0.1em;
+    letter-spacing:0.04em;
     text-transform:uppercase;
     font-weight:700;
     color:var(--ink-soft);
     cursor:pointer;
     font-family:inherit;
+    transition:background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
   }
   nav.tabs button.active{
     color:var(--ink);
-    border-bottom-color:var(--highway);
+    background:var(--paper-dark);
+    box-shadow:var(--shadow-sm);
   }
 
-  main{padding:14px 16px 8px;}
+  main{padding:16px 16px 8px;}
   .empty{
-    padding:36px 12px;
+    padding:40px 16px;
     text-align:center;
     color:var(--ink-soft);
     font-size:13px;
-    border:1px dashed var(--line);
+    background:var(--paper-dark);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow-sm);
   }
-  .empty .display{display:block; font-size:13px; margin-bottom:6px; color:var(--ink);}
+  .empty .display{display:block; font-size:14px; margin-bottom:6px; color:var(--ink);}
 
-  .ledger{border-top:1px solid var(--ink);}
+  .ledger{display:flex; flex-direction:column; gap:8px;}
   .row{
     display:flex;
     gap:10px;
-    padding:11px 2px;
-    border-bottom:1px solid var(--line);
+    padding:13px 14px;
+    background:var(--paper-dark);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow-sm);
     cursor:pointer;
+    transition:transform 0.1s ease, box-shadow 0.1s ease;
   }
-  .row:active{background:var(--paper-dark);}
+  .row:active{transform:scale(0.99); box-shadow:none;}
   .row .tag{
-    flex:0 0 5px;
-    border-radius:1px;
+    flex:0 0 4px;
+    border-radius:999px;
   }
   .row .body{flex:1; min-width:0;}
   .row .rowtop{display:flex; justify-content:space-between; gap:8px; align-items:baseline;}
   .row .kind{
-    font-size:9.5px; letter-spacing:0.1em; text-transform:uppercase; font-weight:700;
+    font-size:10px; letter-spacing:0.05em; text-transform:uppercase; font-weight:700;
   }
-  .row .date{font-size:10px; color:var(--ink-soft); font-family:ui-monospace,monospace;}
-  .row .note{font-size:14px; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-  .row .meta{font-size:10.5px; color:var(--ink-soft); margin-top:2px; font-family:ui-monospace,monospace;}
+  .row .date{font-size:10.5px; color:var(--ink-soft);}
+  .row .note{font-size:14.5px; margin-top:3px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .row .meta{font-size:11px; color:var(--ink-soft); margin-top:3px;}
   .row .amount{
-    font-family:ui-monospace,monospace; font-weight:700; font-size:14px; white-space:nowrap;
+    font-weight:800; font-size:14.5px; white-space:nowrap; font-variant-numeric:tabular-nums;
   }
 
   .tag.campsite{background:var(--eucalypt);}
@@ -163,93 +172,128 @@
   .kind.note{color:var(--ochre);}
 
   .photogrid{
-    display:grid; grid-template-columns:repeat(3,1fr); gap:3px;
+    display:grid; grid-template-columns:repeat(3,1fr); gap:6px;
   }
   .photogrid .thumb{
-    aspect-ratio:1; overflow:hidden; background:var(--paper-dark); border:1px solid var(--line);
+    aspect-ratio:1; overflow:hidden; background:var(--paper-darker); border-radius:10px;
+    box-shadow:var(--shadow-sm);
     position:relative; cursor:pointer;
   }
   .photogrid img{width:100%; height:100%; object-fit:cover; display:block;}
 
   .fab{
     position:fixed; right:18px; bottom:22px; z-index:25;
-    width:56px; height:56px; border-radius:50%;
-    background:var(--highway); color:var(--highway-ink);
-    border:none; font-size:26px; font-weight:400;
-    box-shadow:0 2px 6px rgba(0,0,0,0.35);
+    width:58px; height:58px; border-radius:50%;
+    background:linear-gradient(135deg, var(--highway), #F0955C);
+    color:var(--highway-ink);
+    border:none; font-size:27px; font-weight:400;
+    box-shadow:var(--shadow-lg);
     cursor:pointer;
     display:flex; align-items:center; justify-content:center;
+    transition:transform 0.12s ease;
   }
-  .fab:active{transform:scale(0.94);}
+  .fab:active{transform:scale(0.92);}
 
   .sheet-backdrop{
-    position:fixed; inset:0; background:rgba(20,18,12,0.45); z-index:40;
+    position:fixed; inset:0; background:rgba(24,20,14,0.4); z-index:40;
+    backdrop-filter:blur(2px);
     opacity:0; pointer-events:none; transition:opacity 0.18s ease;
   }
   .sheet-backdrop.open{opacity:1; pointer-events:auto;}
   .sheet{
     position:fixed; left:0; right:0; bottom:0; z-index:41;
-    background:var(--paper);
-    border-top:2px solid var(--ink);
+    background:var(--paper-dark);
+    border-radius:24px 24px 0 0;
+    box-shadow:var(--shadow-lg);
     max-height:88vh; overflow-y:auto;
     transform:translateY(100%);
     transition:transform 0.22s ease;
-    padding:16px 16px calc(20px + env(safe-area-inset-bottom));
+    padding:18px 18px calc(20px + env(safe-area-inset-bottom));
   }
   .sheet.open{transform:translateY(0);}
-  .sheet h2{font-size:15px; margin-bottom:14px;}
+  .sheet h2{font-size:18px; margin-bottom:16px;}
   .sheet .closebtn{
-    position:absolute; top:12px; right:14px; background:none; border:none;
-    font-size:18px; color:var(--ink-soft); cursor:pointer; padding:4px;
+    position:absolute; top:14px; right:16px; width:30px; height:30px;
+    background:var(--paper-darker); border:none; border-radius:50%;
+    font-size:16px; color:var(--ink-soft); cursor:pointer; padding:0;
+    display:flex; align-items:center; justify-content:center;
   }
 
-  .field{margin-bottom:12px;}
+  .field{margin-bottom:14px;}
   .field label{
-    display:block; font-size:10px; text-transform:uppercase; letter-spacing:0.09em;
-    color:var(--ink-soft); margin-bottom:4px; font-weight:700;
+    display:block; font-size:10.5px; text-transform:uppercase; letter-spacing:0.06em;
+    color:var(--ink-soft); margin-bottom:6px; font-weight:700;
   }
   .field input[type=text], .field input[type=number], .field input[type=date], .field textarea, .field select{
-    width:100%; padding:9px 10px; border:1px solid var(--ink); background:var(--paper-dark);
-    font-size:14px; font-family:inherit; color:var(--ink); border-radius:var(--radius);
+    width:100%; padding:11px 12px; border:1.5px solid var(--line); background:var(--paper);
+    font-size:14.5px; font-family:inherit; color:var(--ink); border-radius:var(--radius);
+    transition:border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .field input:focus, .field textarea:focus, .field select:focus{
+    outline:none; border-color:var(--highway); box-shadow:0 0 0 3px rgba(226,99,42,0.15);
   }
   .field textarea{resize:vertical; min-height:60px;}
   .typegrid{display:grid; grid-template-columns:repeat(4,1fr); gap:6px;}
   .typegrid button{
-    padding:8px 2px; border:1px solid var(--ink); background:var(--paper-dark); border-radius:var(--radius);
-    font-size:9.5px; text-transform:uppercase; letter-spacing:0.06em; font-weight:700; cursor:pointer;
-    color:var(--ink-soft); font-family:inherit;
+    padding:9px 2px; border:1.5px solid var(--line); background:var(--paper); border-radius:999px;
+    font-size:9.5px; text-transform:uppercase; letter-spacing:0.04em; font-weight:700; cursor:pointer;
+    color:var(--ink-soft); font-family:inherit; transition:background 0.15s ease, color 0.15s ease;
   }
-  .typegrid button.selected{background:var(--ink); color:var(--paper);}
+  .typegrid button.selected{background:var(--ink); color:var(--paper-dark); border-color:var(--ink);}
+
+  .geosearch{position:relative; margin-bottom:8px;}
+  .geosearch-input{
+    width:100%; padding:11px 12px; border:1.5px solid var(--line); background:var(--paper);
+    font-size:14px; font-family:inherit; color:var(--ink); border-radius:var(--radius);
+    transition:border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .geosearch-input:focus{
+    outline:none; border-color:var(--highway); box-shadow:0 0 0 3px rgba(226,99,42,0.15);
+  }
+  .geosearch-results{
+    display:none; position:absolute; left:0; right:0; top:calc(100% + 6px);
+    background:var(--paper-dark); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow-md); max-height:190px; overflow-y:auto; z-index:5;
+  }
+  .geosearch-results.open{display:block;}
+  .geosearch-item{padding:10px 12px; font-size:13px; color:var(--ink); cursor:pointer; border-bottom:1px solid var(--line);}
+  .geosearch-item:last-child{border-bottom:none;}
+  .geosearch-item:active{background:var(--paper-darker);}
+  .geosearch-item.geosearch-status{color:var(--ink-soft); cursor:default;}
 
   .geobtn, .photobtn{
-    width:100%; padding:10px; border:1px dashed var(--ink); background:none; border-radius:var(--radius);
-    font-size:12.5px; cursor:pointer; color:var(--ink); font-family:inherit; text-align:left;
+    width:100%; padding:11px 12px; border:1.5px dashed var(--line); background:var(--paper); border-radius:var(--radius);
+    font-size:13px; cursor:pointer; color:var(--ink); font-family:inherit; text-align:left;
+    transition:border-color 0.15s ease, background 0.15s ease;
   }
-  .geobtn.got, .photobtn.got{border-style:solid; background:var(--paper-dark);}
-  .geo-readout{font-family:ui-monospace,monospace; font-size:11px; color:var(--ink-soft); margin-top:4px;}
+  .geobtn.got, .photobtn.got{border-style:solid; border-color:var(--highway); background:rgba(226,99,42,0.06);}
+  .geo-readout{font-variant-numeric:tabular-nums; font-size:11.5px; color:var(--ink-soft); margin-top:6px;}
 
   .thumbrow{display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;}
-  .thumbrow .t{width:56px; height:56px; border:1px solid var(--line); overflow:hidden;}
+  .thumbrow .t{width:56px; height:56px; border-radius:8px; overflow:hidden; box-shadow:var(--shadow-sm);}
   .thumbrow .t img{width:100%; height:100%; object-fit:cover;}
 
-  .actions{display:flex; gap:8px; margin-top:16px;}
+  .actions{display:flex; gap:10px; margin-top:18px;}
   .btn{
-    flex:1; padding:12px; border:none; border-radius:var(--radius); font-size:12.5px;
-    text-transform:uppercase; letter-spacing:0.08em; font-weight:700; cursor:pointer; font-family:inherit;
+    flex:1; padding:13px; border:none; border-radius:999px; font-size:13.5px;
+    letter-spacing:0.01em; font-weight:700; cursor:pointer; font-family:inherit;
+    transition:transform 0.1s ease, opacity 0.1s ease;
   }
-  .btn.primary{background:var(--highway); color:var(--highway-ink);}
-  .btn.ghost{background:none; border:1px solid var(--ink); color:var(--ink);}
-  .btn.danger{background:var(--danger); color:#F4E9E4;}
+  .btn:active{transform:scale(0.97);}
+  .btn.primary{background:linear-gradient(135deg, var(--highway), #F0955C); color:var(--highway-ink); box-shadow:var(--shadow-sm);}
+  .btn.ghost{background:var(--paper); border:1.5px solid var(--line); color:var(--ink);}
+  .btn.danger{background:var(--danger); color:#FDEEEB;}
 
   .datapage .block{
-    border:1px solid var(--ink); padding:14px; margin-bottom:12px; background:var(--paper-dark);
+    border:none; padding:16px; margin-bottom:12px; background:var(--paper-dark);
+    border-radius:var(--radius); box-shadow:var(--shadow-sm);
   }
-  .datapage .block h3{font-size:12px; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:8px;}
-  .datapage .block p{font-size:12px; color:var(--ink-soft); margin:0 0 10px;}
+  .datapage .block h3{font-size:13.5px; font-weight:800; margin-bottom:8px;}
+  .datapage .block p{font-size:12.5px; color:var(--ink-soft); margin:0 0 12px; line-height:1.5;}
   .toast{
     position:fixed; left:50%; bottom:96px; transform:translateX(-50%);
-    background:var(--ink); color:var(--paper); padding:9px 16px; font-size:12.5px;
-    border-radius:2px; z-index:60; opacity:0; pointer-events:none; transition:opacity 0.2s ease;
+    background:var(--ink); color:var(--paper-dark); padding:10px 18px; font-size:12.5px; font-weight:600;
+    border-radius:999px; box-shadow:var(--shadow-md); z-index:60; opacity:0; pointer-events:none; transition:opacity 0.2s ease;
   }
   .toast.show{opacity:1;}
   input[type=file]{display:none;}
@@ -301,7 +345,11 @@
   </div>
   <div class="field">
     <label>Location</label>
-    <button class="geobtn" id="logGeoBtn">📍 Capture current location</button>
+    <div class="geosearch">
+      <input type="text" class="geosearch-input" id="logGeoSearch" placeholder="🔎 Search a place…" autocomplete="off">
+      <div class="geosearch-results" id="logGeoResults"></div>
+    </div>
+    <button class="geobtn" id="logGeoBtn">📍 Use current location</button>
     <div class="geo-readout" id="logGeoReadout"></div>
   </div>
   <div class="field">
@@ -344,7 +392,11 @@
   </div>
   <div class="field">
     <label>Location</label>
-    <button class="geobtn" id="spendGeoBtn">📍 Capture current location</button>
+    <div class="geosearch">
+      <input type="text" class="geosearch-input" id="spendGeoSearch" placeholder="🔎 Search a place…" autocomplete="off">
+      <div class="geosearch-results" id="spendGeoResults"></div>
+    </div>
+    <button class="geobtn" id="spendGeoBtn">📍 Use current location</button>
     <div class="geo-readout" id="spendGeoReadout"></div>
   </div>
   <div class="actions">
@@ -648,6 +700,10 @@ function openLogSheet(){
   document.getElementById('logNote').value='';
   document.getElementById('logGeoReadout').textContent='';
   document.getElementById('logGeoBtn').classList.remove('got');
+  document.getElementById('logGeoBtn').textContent='📍 Use current location';
+  document.getElementById('logGeoSearch').value='';
+  document.getElementById('logGeoResults').innerHTML='';
+  document.getElementById('logGeoResults').classList.remove('open');
   document.getElementById('logThumbs').innerHTML='';
   pendingGeo.log=null; pendingPhotos=[];
   document.querySelectorAll('#typeGrid button').forEach(b=>b.classList.toggle('selected',b.dataset.type==='campsite'));
@@ -690,6 +746,10 @@ function openSpendSheet(){
   document.getElementById('spendNote').value='';
   document.getElementById('spendGeoReadout').textContent='';
   document.getElementById('spendGeoBtn').classList.remove('got');
+  document.getElementById('spendGeoBtn').textContent='📍 Use current location';
+  document.getElementById('spendGeoSearch').value='';
+  document.getElementById('spendGeoResults').innerHTML='';
+  document.getElementById('spendGeoResults').classList.remove('open');
   pendingGeo.spend=null;
   document.querySelectorAll('#catGrid button').forEach(b=>b.classList.toggle('selected',b.dataset.cat==='Fuel'));
   openSheet('sheetSpend');
@@ -724,10 +784,65 @@ function captureGeo(which){
     btn.classList.add('got');
     readout.textContent=pos.coords.latitude.toFixed(5)+', '+pos.coords.longitude.toFixed(5)+' (±'+Math.round(pos.coords.accuracy)+'m)';
   },err=>{
-    btn.textContent='📍 Capture current location';
+    btn.textContent='📍 Use current location';
     readout.textContent='Couldn\'t get location — check permission, try again.';
   },{enableHighAccuracy:true, timeout:15000});
 }
+
+/* ---------- place search (geocoding via OpenStreetMap Nominatim) ---------- */
+function debounce(fn, wait){
+  let t;
+  return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), wait); };
+}
+async function searchPlace(which, query){
+  const resultsEl=document.getElementById(which+'GeoResults');
+  const q=(query||'').trim();
+  if(q.length<3){ resultsEl.innerHTML=''; resultsEl.classList.remove('open'); return; }
+  resultsEl.innerHTML='<div class="geosearch-item geosearch-status">Searching…</div>';
+  resultsEl.classList.add('open');
+  let data;
+  try{
+    const url='https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&q='+encodeURIComponent(q);
+    const res=await fetch(url,{headers:{'Accept':'application/json'}});
+    if(!res.ok) throw new Error('bad response');
+    data=await res.json();
+  }catch(err){
+    resultsEl.innerHTML='<div class="geosearch-item geosearch-status">Search unavailable — check connection</div>';
+    return;
+  }
+  if(!data.length){
+    resultsEl.innerHTML='<div class="geosearch-item geosearch-status">No matches</div>';
+    return;
+  }
+  resultsEl.innerHTML=data.map((d,i)=>`<div class="geosearch-item" data-idx="${i}">${escapeHtml(d.display_name)}</div>`).join('');
+  resultsEl.querySelectorAll('.geosearch-item[data-idx]').forEach(el=>{
+    el.addEventListener('click',()=>{
+      const d=data[parseInt(el.dataset.idx,10)];
+      selectPlace(which,d);
+    });
+  });
+}
+function selectPlace(which, place){
+  const lat=parseFloat(place.lat), lon=parseFloat(place.lon);
+  pendingGeo[which]={lat,lon};
+  const btn=document.getElementById(which+'GeoBtn');
+  const readout=document.getElementById(which+'GeoReadout');
+  btn.classList.add('got');
+  const shortName=place.display_name.split(',')[0];
+  readout.textContent=lat.toFixed(5)+', '+lon.toFixed(5)+' — '+shortName;
+  document.getElementById(which+'GeoSearch').value=shortName;
+  const resultsEl=document.getElementById(which+'GeoResults');
+  resultsEl.innerHTML=''; resultsEl.classList.remove('open');
+}
+const debouncedSearchLog=debounce(q=>searchPlace('log',q),450);
+const debouncedSearchSpend=debounce(q=>searchPlace('spend',q),450);
+document.getElementById('logGeoSearch').addEventListener('input',e=>debouncedSearchLog(e.target.value));
+document.getElementById('spendGeoSearch').addEventListener('input',e=>debouncedSearchSpend(e.target.value));
+document.addEventListener('click',e=>{
+  document.querySelectorAll('.geosearch-results.open').forEach(el=>{
+    if(!el.parentElement.contains(e.target)) el.classList.remove('open');
+  });
+});
 
 function resizeImage(file){
   return new Promise(resolve=>{
