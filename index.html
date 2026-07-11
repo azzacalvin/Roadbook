@@ -1,0 +1,825 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Roadbook</title>
+<link rel="manifest" href="data:application/manifest+json,{}">
+<style>
+  :root{
+    --paper:#E9E3D0;
+    --paper-dark:#DCD3B8;
+    --paper-darker:#CFC5A4;
+    --ink:#2B2A25;
+    --ink-soft:#5B584C;
+    --highway:#29506B;
+    --highway-ink:#EAF0F4;
+    --rust:#B5502A;
+    --eucalypt:#5F7A45;
+    --ochre:#C98A2C;
+    --line:#B7AE92;
+    --danger:#9E3B2E;
+    --radius:2px;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:var(--paper);
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size:28px 28px;
+    background-attachment:fixed;
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-tap-highlight-color:transparent;
+    padding-bottom:84px;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
+  }
+  :focus-visible{outline:2px solid var(--highway); outline-offset:2px;}
+
+  h1,h2,h3{margin:0;}
+  .display{
+    font-family:"Courier New",ui-monospace,monospace;
+    text-transform:uppercase;
+    letter-spacing:0.14em;
+    font-weight:700;
+  }
+
+  header.top{
+    position:sticky; top:0; z-index:20;
+    background:var(--paper);
+    border-bottom:2px solid var(--ink);
+    padding:14px 16px 10px;
+  }
+  header.top .titlerow{
+    display:flex; align-items:baseline; justify-content:space-between;
+  }
+  header.top .titlerow h1{
+    font-size:20px;
+  }
+  header.top .titlerow .sub{
+    font-size:10px; letter-spacing:0.12em; color:var(--ink-soft); text-transform:uppercase;
+  }
+
+  .odometer{
+    margin-top:12px;
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:1px;
+    background:var(--ink);
+    border:1px solid var(--ink);
+  }
+  .odometer .cell{
+    background:var(--paper-dark);
+    padding:8px 4px 7px;
+    text-align:center;
+  }
+  .odometer .cell .val{
+    font-family:ui-monospace,"Courier New",monospace;
+    font-variant-numeric:tabular-nums;
+    font-size:18px;
+    font-weight:700;
+    letter-spacing:0.02em;
+  }
+  .odometer .cell .lbl{
+    margin-top:2px;
+    font-size:8.5px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+  }
+
+  nav.tabs{
+    display:flex;
+    border-bottom:1px solid var(--ink);
+    margin-top:12px;
+    gap:0;
+  }
+  nav.tabs button{
+    flex:1;
+    background:none;
+    border:none;
+    border-bottom:3px solid transparent;
+    padding:9px 2px 8px;
+    font-size:10.5px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    font-weight:700;
+    color:var(--ink-soft);
+    cursor:pointer;
+    font-family:inherit;
+  }
+  nav.tabs button.active{
+    color:var(--ink);
+    border-bottom-color:var(--highway);
+  }
+
+  main{padding:14px 16px 8px;}
+  .empty{
+    padding:36px 12px;
+    text-align:center;
+    color:var(--ink-soft);
+    font-size:13px;
+    border:1px dashed var(--line);
+  }
+  .empty .display{display:block; font-size:13px; margin-bottom:6px; color:var(--ink);}
+
+  .ledger{border-top:1px solid var(--ink);}
+  .row{
+    display:flex;
+    gap:10px;
+    padding:11px 2px;
+    border-bottom:1px solid var(--line);
+    cursor:pointer;
+  }
+  .row:active{background:var(--paper-dark);}
+  .row .tag{
+    flex:0 0 5px;
+    border-radius:1px;
+  }
+  .row .body{flex:1; min-width:0;}
+  .row .rowtop{display:flex; justify-content:space-between; gap:8px; align-items:baseline;}
+  .row .kind{
+    font-size:9.5px; letter-spacing:0.1em; text-transform:uppercase; font-weight:700;
+  }
+  .row .date{font-size:10px; color:var(--ink-soft); font-family:ui-monospace,monospace;}
+  .row .note{font-size:14px; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .row .meta{font-size:10.5px; color:var(--ink-soft); margin-top:2px; font-family:ui-monospace,monospace;}
+  .row .amount{
+    font-family:ui-monospace,monospace; font-weight:700; font-size:14px; white-space:nowrap;
+  }
+
+  .tag.campsite{background:var(--eucalypt);}
+  .tag.fuel{background:var(--rust);}
+  .tag.poi{background:var(--highway);}
+  .tag.note{background:var(--ochre);}
+  .kind.campsite{color:var(--eucalypt);}
+  .kind.fuel{color:var(--rust);}
+  .kind.poi{color:var(--highway);}
+  .kind.note{color:var(--ochre);}
+
+  .photogrid{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:3px;
+  }
+  .photogrid .thumb{
+    aspect-ratio:1; overflow:hidden; background:var(--paper-dark); border:1px solid var(--line);
+    position:relative; cursor:pointer;
+  }
+  .photogrid img{width:100%; height:100%; object-fit:cover; display:block;}
+
+  .fab{
+    position:fixed; right:18px; bottom:22px; z-index:25;
+    width:56px; height:56px; border-radius:50%;
+    background:var(--highway); color:var(--highway-ink);
+    border:none; font-size:26px; font-weight:400;
+    box-shadow:0 2px 6px rgba(0,0,0,0.35);
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .fab:active{transform:scale(0.94);}
+
+  .sheet-backdrop{
+    position:fixed; inset:0; background:rgba(20,18,12,0.45); z-index:40;
+    opacity:0; pointer-events:none; transition:opacity 0.18s ease;
+  }
+  .sheet-backdrop.open{opacity:1; pointer-events:auto;}
+  .sheet{
+    position:fixed; left:0; right:0; bottom:0; z-index:41;
+    background:var(--paper);
+    border-top:2px solid var(--ink);
+    max-height:88vh; overflow-y:auto;
+    transform:translateY(100%);
+    transition:transform 0.22s ease;
+    padding:16px 16px calc(20px + env(safe-area-inset-bottom));
+  }
+  .sheet.open{transform:translateY(0);}
+  .sheet h2{font-size:15px; margin-bottom:14px;}
+  .sheet .closebtn{
+    position:absolute; top:12px; right:14px; background:none; border:none;
+    font-size:18px; color:var(--ink-soft); cursor:pointer; padding:4px;
+  }
+
+  .field{margin-bottom:12px;}
+  .field label{
+    display:block; font-size:10px; text-transform:uppercase; letter-spacing:0.09em;
+    color:var(--ink-soft); margin-bottom:4px; font-weight:700;
+  }
+  .field input[type=text], .field input[type=number], .field input[type=date], .field textarea, .field select{
+    width:100%; padding:9px 10px; border:1px solid var(--ink); background:var(--paper-dark);
+    font-size:14px; font-family:inherit; color:var(--ink); border-radius:var(--radius);
+  }
+  .field textarea{resize:vertical; min-height:60px;}
+  .typegrid{display:grid; grid-template-columns:repeat(4,1fr); gap:6px;}
+  .typegrid button{
+    padding:8px 2px; border:1px solid var(--ink); background:var(--paper-dark); border-radius:var(--radius);
+    font-size:9.5px; text-transform:uppercase; letter-spacing:0.06em; font-weight:700; cursor:pointer;
+    color:var(--ink-soft); font-family:inherit;
+  }
+  .typegrid button.selected{background:var(--ink); color:var(--paper);}
+
+  .geobtn, .photobtn{
+    width:100%; padding:10px; border:1px dashed var(--ink); background:none; border-radius:var(--radius);
+    font-size:12.5px; cursor:pointer; color:var(--ink); font-family:inherit; text-align:left;
+  }
+  .geobtn.got, .photobtn.got{border-style:solid; background:var(--paper-dark);}
+  .geo-readout{font-family:ui-monospace,monospace; font-size:11px; color:var(--ink-soft); margin-top:4px;}
+
+  .thumbrow{display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;}
+  .thumbrow .t{width:56px; height:56px; border:1px solid var(--line); overflow:hidden;}
+  .thumbrow .t img{width:100%; height:100%; object-fit:cover;}
+
+  .actions{display:flex; gap:8px; margin-top:16px;}
+  .btn{
+    flex:1; padding:12px; border:none; border-radius:var(--radius); font-size:12.5px;
+    text-transform:uppercase; letter-spacing:0.08em; font-weight:700; cursor:pointer; font-family:inherit;
+  }
+  .btn.primary{background:var(--highway); color:var(--highway-ink);}
+  .btn.ghost{background:none; border:1px solid var(--ink); color:var(--ink);}
+  .btn.danger{background:var(--danger); color:#F4E9E4;}
+
+  .datapage .block{
+    border:1px solid var(--ink); padding:14px; margin-bottom:12px; background:var(--paper-dark);
+  }
+  .datapage .block h3{font-size:12px; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:8px;}
+  .datapage .block p{font-size:12px; color:var(--ink-soft); margin:0 0 10px;}
+  .toast{
+    position:fixed; left:50%; bottom:96px; transform:translateX(-50%);
+    background:var(--ink); color:var(--paper); padding:9px 16px; font-size:12.5px;
+    border-radius:2px; z-index:60; opacity:0; pointer-events:none; transition:opacity 0.2s ease;
+  }
+  .toast.show{opacity:1;}
+  input[type=file]{display:none;}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="titlerow">
+    <h1 class="display">Roadbook</h1>
+    <span class="sub" id="tripSpan">—</span>
+  </div>
+  <div class="odometer">
+    <div class="cell"><div class="val" id="odEntries">0</div><div class="lbl">Stops</div></div>
+    <div class="cell"><div class="val" id="odKm">0</div><div class="lbl">Km logged</div></div>
+    <div class="cell"><div class="val" id="odSpend">$0</div><div class="lbl">Spent</div></div>
+    <div class="cell"><div class="val" id="odDays">0</div><div class="lbl">Days</div></div>
+  </div>
+  <nav class="tabs">
+    <button data-tab="log" class="active">Log</button>
+    <button data-tab="spend">Spend</button>
+    <button data-tab="photos">Photos</button>
+    <button data-tab="data">Data</button>
+  </nav>
+</header>
+
+<main id="main"></main>
+
+<button class="fab" id="fab">+</button>
+
+<div class="sheet-backdrop" id="backdrop"></div>
+
+<!-- Log entry sheet -->
+<div class="sheet" id="sheetLog">
+  <button class="closebtn" data-close>✕</button>
+  <h2 class="display">New stop</h2>
+  <div class="field">
+    <label>Type</label>
+    <div class="typegrid" id="typeGrid">
+      <button data-type="campsite" class="selected">Campsite</button>
+      <button data-type="poi">Point of interest</button>
+      <button data-type="fuel">Fuel stop</button>
+      <button data-type="note">Note</button>
+    </div>
+  </div>
+  <div class="field">
+    <label>Note</label>
+    <textarea id="logNote" placeholder="What's here — site number, view, conditions..."></textarea>
+  </div>
+  <div class="field">
+    <label>Location</label>
+    <button class="geobtn" id="logGeoBtn">📍 Capture current location</button>
+    <div class="geo-readout" id="logGeoReadout"></div>
+  </div>
+  <div class="field">
+    <label>Photos</label>
+    <button class="photobtn" id="logPhotoBtn">📷 Add photo</button>
+    <input type="file" id="logPhotoInput" accept="image/*" capture="environment" multiple>
+    <div class="thumbrow" id="logThumbs"></div>
+  </div>
+  <div class="actions">
+    <button class="btn ghost" data-close>Cancel</button>
+    <button class="btn primary" id="logSave">Save stop</button>
+  </div>
+</div>
+
+<!-- Expense sheet -->
+<div class="sheet" id="sheetSpend">
+  <button class="closebtn" data-close>✕</button>
+  <h2 class="display">New expense</h2>
+  <div class="field">
+    <label>Category</label>
+    <div class="typegrid" id="catGrid">
+      <button data-cat="Fuel" class="selected">Fuel</button>
+      <button data-cat="Camp fees">Camp fees</button>
+      <button data-cat="Food">Food</button>
+      <button data-cat="Repairs">Repairs</button>
+      <button data-cat="Other">Other</button>
+    </div>
+  </div>
+  <div class="field">
+    <label>Amount ($)</label>
+    <input type="number" id="spendAmount" inputmode="decimal" step="0.01" placeholder="0.00">
+  </div>
+  <div class="field">
+    <label>Odometer (km)</label>
+    <input type="number" id="spendOdo" inputmode="numeric" placeholder="optional">
+  </div>
+  <div class="field">
+    <label>Note</label>
+    <input type="text" id="spendNote" placeholder="optional">
+  </div>
+  <div class="field">
+    <label>Location</label>
+    <button class="geobtn" id="spendGeoBtn">📍 Capture current location</button>
+    <div class="geo-readout" id="spendGeoReadout"></div>
+  </div>
+  <div class="actions">
+    <button class="btn ghost" data-close>Cancel</button>
+    <button class="btn primary" id="spendSave">Save expense</button>
+  </div>
+</div>
+
+<!-- Detail / view sheet -->
+<div class="sheet" id="sheetDetail">
+  <button class="closebtn" data-close>✕</button>
+  <div id="detailBody"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------- storage ---------- */
+const DB_NAME='roadbook', DB_VER=1;
+let db;
+function openDB(){
+  return new Promise((res,rej)=>{
+    const r=indexedDB.open(DB_NAME,DB_VER);
+    r.onupgradeneeded=e=>{
+      const d=e.target.result;
+      if(!d.objectStoreNames.contains('entries')) d.createObjectStore('entries',{keyPath:'id'});
+      if(!d.objectStoreNames.contains('expenses')) d.createObjectStore('expenses',{keyPath:'id'});
+      if(!d.objectStoreNames.contains('photos')) d.createObjectStore('photos',{keyPath:'id'});
+    };
+    r.onsuccess=e=>{db=e.target.result; res(db);};
+    r.onerror=e=>rej(e);
+  });
+}
+function tx(store,mode='readonly'){return db.transaction(store,mode).objectStore(store);}
+function idAll(store){
+  return new Promise(res=>{
+    const out=[]; const req=tx(store).openCursor();
+    req.onsuccess=e=>{const c=e.target.result; if(c){out.push(c.value); c.continue();} else res(out);};
+  });
+}
+function idPut(store,val){return new Promise(res=>{const r=tx(store,'readwrite').put(val); r.onsuccess=()=>res();});}
+function idDelete(store,id){return new Promise(res=>{const r=tx(store,'readwrite').delete(id); r.onsuccess=()=>res();});}
+function idClear(store){return new Promise(res=>{const r=tx(store,'readwrite').clear(); r.onsuccess=()=>res();});}
+function newId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8);}
+
+/* ---------- state ---------- */
+let entries=[], expenses=[], photos=[];
+let activeTab='log';
+let pendingGeo={log:null, spend:null};
+let pendingPhotos=[]; // {id, dataUrl} for current log sheet
+
+async function loadAll(){
+  entries = (await idAll('entries')).sort((a,b)=>b.ts-a.ts);
+  expenses = (await idAll('expenses')).sort((a,b)=>b.ts-a.ts);
+  photos = await idAll('photos');
+}
+
+/* ---------- helpers ---------- */
+function fmtDate(ts){
+  const d=new Date(ts);
+  return d.toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'2-digit'});
+}
+function fmtTime(ts){
+  const d=new Date(ts);
+  return d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
+}
+function haversine(lat1,lon1,lat2,lon2){
+  const R=6371, toRad=d=>d*Math.PI/180;
+  const dLat=toRad(lat2-lat1), dLon=toRad(lon2-lon1);
+  const a=Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(toast._h); toast._h=setTimeout(()=>t.classList.remove('show'),1800);
+}
+function typeLabel(t){
+  return {campsite:'Campsite',poi:'Point of interest',fuel:'Fuel stop',note:'Note'}[t]||t;
+}
+
+/* ---------- odometer / header ---------- */
+function renderOdometer(){
+  document.getElementById('odEntries').textContent=entries.length;
+  const withGeo = entries.filter(e=>e.lat!=null).sort((a,b)=>a.ts-b.ts);
+  let km=0;
+  for(let i=1;i<withGeo.length;i++){
+    km += haversine(withGeo[i-1].lat,withGeo[i-1].lon,withGeo[i].lat,withGeo[i].lon);
+  }
+  document.getElementById('odKm').textContent=Math.round(km);
+  const spend=expenses.reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+  document.getElementById('odSpend').textContent='$'+Math.round(spend);
+  const allTs=[...entries.map(e=>e.ts),...expenses.map(e=>e.ts)];
+  let days=0, span='—';
+  if(allTs.length){
+    const min=Math.min(...allTs), max=Math.max(...allTs);
+    days=Math.max(1, Math.round((max-min)/86400000)+1);
+    span=fmtDate(min)+' – '+fmtDate(max);
+  }
+  document.getElementById('odDays').textContent=days;
+  document.getElementById('tripSpan').textContent=span;
+}
+
+/* ---------- rendering tabs ---------- */
+function render(){
+  renderOdometer();
+  const main=document.getElementById('main');
+  if(activeTab==='log') return renderLog(main);
+  if(activeTab==='spend') return renderSpend(main);
+  if(activeTab==='photos') return renderPhotos(main);
+  if(activeTab==='data') return renderData(main);
+}
+
+function renderLog(main){
+  if(!entries.length){
+    main.innerHTML='<div class="empty"><span class="display">No stops yet</span>Tap + to log a campsite, fuel stop, or note.</div>';
+    return;
+  }
+  main.innerHTML='<div class="ledger">'+entries.map(e=>{
+    const loc = e.lat!=null ? `${e.lat.toFixed(4)}, ${e.lon.toFixed(4)}` : 'No location';
+    const photoCount = (e.photoIds||[]).length;
+    return `<div class="row" data-open-entry="${e.id}">
+      <div class="tag ${e.type}"></div>
+      <div class="body">
+        <div class="rowtop">
+          <span class="kind ${e.type}">${typeLabel(e.type)}</span>
+          <span class="date">${fmtDate(e.ts)} ${fmtTime(e.ts)}</span>
+        </div>
+        <div class="note">${escapeHtml(e.note||'(no note)')}</div>
+        <div class="meta">${loc}${photoCount?' · '+photoCount+' photo'+(photoCount>1?'s':''):''}</div>
+      </div>
+    </div>`;
+  }).join('')+'</div>';
+  main.querySelectorAll('[data-open-entry]').forEach(el=>{
+    el.addEventListener('click',()=>openEntryDetail(el.dataset.openEntry));
+  });
+}
+
+function renderSpend(main){
+  if(!expenses.length){
+    main.innerHTML='<div class="empty"><span class="display">No expenses yet</span>Tap + to log fuel, camp fees, food, or repairs.</div>';
+    return;
+  }
+  main.innerHTML='<div class="ledger">'+expenses.map(e=>{
+    const loc = e.lat!=null ? `${e.lat.toFixed(4)}, ${e.lon.toFixed(4)}` : '';
+    const odo = e.odo ? 'Odo '+e.odo+'km' : '';
+    const meta=[odo,loc].filter(Boolean).join(' · ');
+    return `<div class="row" data-open-expense="${e.id}">
+      <div class="tag fuel" style="background:${catColor(e.category)}"></div>
+      <div class="body">
+        <div class="rowtop">
+          <span class="kind" style="color:${catColor(e.category)}">${e.category}</span>
+          <span class="date">${fmtDate(e.ts)}</span>
+        </div>
+        <div class="note">${escapeHtml(e.note||e.category)}</div>
+        ${meta?`<div class="meta">${meta}</div>`:''}
+      </div>
+      <div class="amount">$${parseFloat(e.amount).toFixed(2)}</div>
+    </div>`;
+  }).join('')+'</div>';
+  main.querySelectorAll('[data-open-expense]').forEach(el=>{
+    el.addEventListener('click',()=>openExpenseDetail(el.dataset.openExpense));
+  });
+}
+function catColor(cat){
+  return {Fuel:'var(--rust)','Camp fees':'var(--eucalypt)',Food:'var(--ochre)',Repairs:'var(--highway)',Other:'var(--ink-soft)'}[cat]||'var(--ink-soft)';
+}
+
+function renderPhotos(main){
+  if(!photos.length){
+    main.innerHTML='<div class="empty"><span class="display">No photos yet</span>Attach photos when logging a stop.</div>';
+    return;
+  }
+  const sorted=[...photos].sort((a,b)=>b.ts-a.ts);
+  main.innerHTML='<div class="photogrid">'+sorted.map(p=>
+    `<div class="thumb" data-open-photo="${p.id}"><img src="${p.dataUrl}" loading="lazy"></div>`
+  ).join('')+'</div>';
+  main.querySelectorAll('[data-open-photo]').forEach(el=>{
+    el.addEventListener('click',()=>openPhotoDetail(el.dataset.openPhoto));
+  });
+}
+
+function renderData(main){
+  main.innerHTML=`<div class="datapage">
+    <div class="block">
+      <h3>Back up everything</h3>
+      <p>Saves all stops, expenses, and photos to one file. Opens Android's share sheet — pick Drive to save it straight there, then open it on your laptop at drive.google.com.</p>
+      <button class="btn primary" id="exportJson" style="width:100%">Save full backup to Drive (.json)</button>
+    </div>
+    <div class="block">
+      <h3>Expenses as spreadsheet</h3>
+      <p>A .csv file — pick Drive from the share sheet, then open it with Google Sheets on your laptop.</p>
+      <button class="btn primary" id="exportCsv" style="width:100%">Save expenses to Drive (.csv)</button>
+    </div>
+    <div class="block">
+      <h3>Restore from backup</h3>
+      <p>Loads a previously exported .json file. This replaces everything currently on this device.</p>
+      <button class="btn ghost" id="importJson" style="width:100%">Choose backup file…</button>
+      <input type="file" id="importInput" accept="application/json">
+    </div>
+    <div class="block">
+      <h3>Install as an app</h3>
+      <p>In Chrome's menu, tap "Add to Home screen" so Roadbook opens full-screen like a normal app, no Play Store needed. Works offline once installed — nothing here relies on the internet.</p>
+    </div>
+    <div class="block">
+      <h3>Erase everything</h3>
+      <p>Clears all stops, expenses, and photos from this device. Export a backup first if you want to keep them.</p>
+      <button class="btn danger" id="wipeAll" style="width:100%">Erase all data</button>
+    </div>
+  </div>`;
+  document.getElementById('exportJson').onclick=exportJson;
+  document.getElementById('exportCsv').onclick=exportCsv;
+  document.getElementById('importJson').onclick=()=>document.getElementById('importInput').click();
+  document.getElementById('importInput').onchange=importJson;
+  document.getElementById('wipeAll').onclick=wipeAll;
+}
+
+function escapeHtml(s){
+  return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ---------- detail sheets ---------- */
+function openEntryDetail(id){
+  const e=entries.find(x=>x.id===id); if(!e) return;
+  const pics=(e.photoIds||[]).map(pid=>photos.find(p=>p.id===pid)).filter(Boolean);
+  document.getElementById('detailBody').innerHTML=`
+    <h2 class="display" style="color:${catColorForType(e.type)}">${typeLabel(e.type)}</h2>
+    <div class="meta" style="margin:8px 0;">${fmtDate(e.ts)} ${fmtTime(e.ts)}</div>
+    <p style="font-size:15px; line-height:1.5;">${escapeHtml(e.note||'(no note)')}</p>
+    ${e.lat!=null?`<div class="geo-readout">📍 ${e.lat.toFixed(5)}, ${e.lon.toFixed(5)}</div>`:''}
+    ${pics.length?`<div class="thumbrow" style="margin-top:12px;">${pics.map(p=>`<div class="t"><img src="${p.dataUrl}"></div>`).join('')}</div>`:''}
+    <div class="actions">
+      <button class="btn ghost" data-close>Close</button>
+      <button class="btn danger" id="delEntry">Delete</button>
+    </div>`;
+  document.getElementById('delEntry').onclick=async()=>{
+    await idDelete('entries',id);
+    for(const pid of (e.photoIds||[])) await idDelete('photos',pid);
+    await loadAll(); closeSheets(); render(); toast('Stop deleted');
+  };
+  openSheet('sheetDetail');
+}
+function catColorForType(t){
+  return {campsite:'var(--eucalypt)',poi:'var(--highway)',fuel:'var(--rust)',note:'var(--ochre)'}[t]||'var(--ink)';
+}
+function openExpenseDetail(id){
+  const e=expenses.find(x=>x.id===id); if(!e) return;
+  document.getElementById('detailBody').innerHTML=`
+    <h2 class="display" style="color:${catColor(e.category)}">${e.category}</h2>
+    <div class="meta" style="margin:8px 0;">${fmtDate(e.ts)}</div>
+    <p style="font-size:22px; font-family:ui-monospace,monospace; font-weight:700;">$${parseFloat(e.amount).toFixed(2)}</p>
+    ${e.odo?`<div class="meta">Odometer: ${e.odo} km</div>`:''}
+    ${e.note?`<p style="font-size:14px;">${escapeHtml(e.note)}</p>`:''}
+    ${e.lat!=null?`<div class="geo-readout">📍 ${e.lat.toFixed(5)}, ${e.lon.toFixed(5)}</div>`:''}
+    <div class="actions">
+      <button class="btn ghost" data-close>Close</button>
+      <button class="btn danger" id="delExpense">Delete</button>
+    </div>`;
+  document.getElementById('delExpense').onclick=async()=>{
+    await idDelete('expenses',id);
+    await loadAll(); closeSheets(); render(); toast('Expense deleted');
+  };
+  openSheet('sheetDetail');
+}
+function openPhotoDetail(id){
+  const p=photos.find(x=>x.id===id); if(!p) return;
+  document.getElementById('detailBody').innerHTML=`
+    <img src="${p.dataUrl}" style="width:100%; border:1px solid var(--ink);">
+    <div class="meta" style="margin-top:10px;">${fmtDate(p.ts)}</div>
+    <div class="actions">
+      <button class="btn ghost" data-close>Close</button>
+      <button class="btn danger" id="delPhoto">Delete photo</button>
+    </div>`;
+  document.getElementById('delPhoto').onclick=async()=>{
+    await idDelete('photos',id);
+    const owner=entries.find(e=>(e.photoIds||[]).includes(id));
+    if(owner){owner.photoIds=owner.photoIds.filter(x=>x!==id); await idPut('entries',owner);}
+    await loadAll(); closeSheets(); render(); toast('Photo deleted');
+  };
+  openSheet('sheetDetail');
+}
+
+/* ---------- sheets open/close ---------- */
+function openSheet(id){
+  document.getElementById('backdrop').classList.add('open');
+  document.getElementById(id).classList.add('open');
+}
+function closeSheets(){
+  document.getElementById('backdrop').classList.remove('open');
+  document.querySelectorAll('.sheet').forEach(s=>s.classList.remove('open'));
+}
+document.getElementById('backdrop').addEventListener('click',closeSheets);
+document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',closeSheets));
+
+/* ---------- fab / new entry flows ---------- */
+document.getElementById('fab').addEventListener('click',()=>{
+  if(activeTab==='spend') openSpendSheet(); else openLogSheet();
+});
+
+function openLogSheet(){
+  document.getElementById('logNote').value='';
+  document.getElementById('logGeoReadout').textContent='';
+  document.getElementById('logGeoBtn').classList.remove('got');
+  document.getElementById('logThumbs').innerHTML='';
+  pendingGeo.log=null; pendingPhotos=[];
+  document.querySelectorAll('#typeGrid button').forEach(b=>b.classList.toggle('selected',b.dataset.type==='campsite'));
+  openSheet('sheetLog');
+}
+document.querySelectorAll('#typeGrid button').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('#typeGrid button').forEach(x=>x.classList.remove('selected'));
+    b.classList.add('selected');
+  });
+});
+document.getElementById('logGeoBtn').addEventListener('click',()=>captureGeo('log'));
+document.getElementById('logPhotoBtn').addEventListener('click',()=>document.getElementById('logPhotoInput').click());
+document.getElementById('logPhotoInput').addEventListener('change',async e=>{
+  for(const file of e.target.files){
+    const dataUrl=await resizeImage(file);
+    const pid=newId();
+    pendingPhotos.push({id:pid,dataUrl,ts:Date.now()});
+  }
+  renderPendingThumbs();
+  e.target.value='';
+});
+function renderPendingThumbs(){
+  document.getElementById('logThumbs').innerHTML=pendingPhotos.map(p=>`<div class="t"><img src="${p.dataUrl}"></div>`).join('');
+  document.getElementById('logPhotoBtn').classList.toggle('got',pendingPhotos.length>0);
+}
+document.getElementById('logSave').addEventListener('click',async()=>{
+  const type=document.querySelector('#typeGrid button.selected').dataset.type;
+  const note=document.getElementById('logNote').value.trim();
+  const geo=pendingGeo.log;
+  const entry={id:newId(), ts:Date.now(), type, note, lat:geo?geo.lat:null, lon:geo?geo.lon:null, photoIds:pendingPhotos.map(p=>p.id)};
+  await idPut('entries',entry);
+  for(const p of pendingPhotos) await idPut('photos',p);
+  await loadAll(); closeSheets(); activeTab='log'; setActiveTabUI(); render(); toast('Stop saved');
+});
+
+function openSpendSheet(){
+  document.getElementById('spendAmount').value='';
+  document.getElementById('spendOdo').value='';
+  document.getElementById('spendNote').value='';
+  document.getElementById('spendGeoReadout').textContent='';
+  document.getElementById('spendGeoBtn').classList.remove('got');
+  pendingGeo.spend=null;
+  document.querySelectorAll('#catGrid button').forEach(b=>b.classList.toggle('selected',b.dataset.cat==='Fuel'));
+  openSheet('sheetSpend');
+}
+document.querySelectorAll('#catGrid button').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('#catGrid button').forEach(x=>x.classList.remove('selected'));
+    b.classList.add('selected');
+  });
+});
+document.getElementById('spendGeoBtn').addEventListener('click',()=>captureGeo('spend'));
+document.getElementById('spendSave').addEventListener('click',async()=>{
+  const category=document.querySelector('#catGrid button.selected').dataset.cat;
+  const amount=parseFloat(document.getElementById('spendAmount').value);
+  if(!amount || amount<=0){toast('Enter an amount'); return;}
+  const odo=document.getElementById('spendOdo').value;
+  const note=document.getElementById('spendNote').value.trim();
+  const geo=pendingGeo.spend;
+  const expense={id:newId(), ts:Date.now(), category, amount, odo:odo?parseFloat(odo):null, note, lat:geo?geo.lat:null, lon:geo?geo.lon:null};
+  await idPut('expenses',expense);
+  await loadAll(); closeSheets(); activeTab='spend'; setActiveTabUI(); render(); toast('Expense saved');
+});
+
+function captureGeo(which){
+  const btn=document.getElementById(which+'GeoBtn');
+  const readout=document.getElementById(which+'GeoReadout');
+  if(!navigator.geolocation){ readout.textContent='Location not available on this device.'; return; }
+  btn.textContent='📍 Locating…';
+  navigator.geolocation.getCurrentPosition(pos=>{
+    pendingGeo[which]={lat:pos.coords.latitude, lon:pos.coords.longitude};
+    btn.textContent='📍 Location captured';
+    btn.classList.add('got');
+    readout.textContent=pos.coords.latitude.toFixed(5)+', '+pos.coords.longitude.toFixed(5)+' (±'+Math.round(pos.coords.accuracy)+'m)';
+  },err=>{
+    btn.textContent='📍 Capture current location';
+    readout.textContent='Couldn\'t get location — check permission, try again.';
+  },{enableHighAccuracy:true, timeout:15000});
+}
+
+function resizeImage(file){
+  return new Promise(resolve=>{
+    const img=new Image();
+    const reader=new FileReader();
+    reader.onload=e=>{ img.onload=()=>{
+      const maxW=1280;
+      const scale=Math.min(1, maxW/img.width);
+      const w=Math.round(img.width*scale), h=Math.round(img.height*scale);
+      const canvas=document.createElement('canvas');
+      canvas.width=w; canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      resolve(canvas.toDataURL('image/jpeg',0.72));
+    }; img.src=e.target.result; };
+    reader.readAsDataURL(file);
+  });
+}
+
+/* ---------- export / import ---------- */
+function download(filename, content, type){
+  const blob=new Blob([content],{type});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=filename; document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+async function shareOrDownload(filename, content, type){
+  try{
+    const file=new File([content], filename, {type});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({files:[file], title:filename});
+      toast('Choose Drive from the share sheet to save it there');
+      return;
+    }
+  }catch(err){
+    if(err && err.name==='AbortError') return; // user cancelled the share sheet, not an error
+  }
+  // fallback: plain download (goes to the Downloads folder instead)
+  download(filename, content, type);
+  toast('Saved to Downloads — open the Drive app to upload it');
+}
+function exportJson(){
+  const payload={version:1, exportedAt:new Date().toISOString(), entries, expenses, photos};
+  shareOrDownload('roadbook-backup-'+new Date().toISOString().slice(0,10)+'.json', JSON.stringify(payload), 'application/json');
+}
+function exportCsv(){
+  const rows=[['Date','Category','Amount','Odometer(km)','Note','Lat','Lon']];
+  expenses.slice().sort((a,b)=>a.ts-b.ts).forEach(e=>{
+    rows.push([fmtDate(e.ts), e.category, parseFloat(e.amount).toFixed(2), e.odo||'', (e.note||'').replace(/,/g,';'), e.lat||'', e.lon||'']);
+  });
+  const csv=rows.map(r=>r.join(',')).join('\n');
+  shareOrDownload('roadbook-expenses-'+new Date().toISOString().slice(0,10)+'.csv', csv, 'text/csv');
+}
+function importJson(e){
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=async ev=>{
+    try{
+      const data=JSON.parse(ev.target.result);
+      if(!confirm('This replaces all data currently on this device with the backup file. Continue?')) return;
+      await idClear('entries'); await idClear('expenses'); await idClear('photos');
+      for(const x of data.entries||[]) await idPut('entries',x);
+      for(const x of data.expenses||[]) await idPut('expenses',x);
+      for(const x of data.photos||[]) await idPut('photos',x);
+      await loadAll(); render(); toast('Backup restored');
+    }catch(err){ toast('Could not read that file'); }
+  };
+  reader.readAsText(file);
+  e.target.value='';
+}
+async function wipeAll(){
+  if(!confirm('Erase all stops, expenses, and photos from this device? This cannot be undone.')) return;
+  await idClear('entries'); await idClear('expenses'); await idClear('photos');
+  await loadAll(); render(); toast('All data erased');
+}
+
+/* ---------- tabs ---------- */
+function setActiveTabUI(){
+  document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.toggle('active',b.dataset.tab===activeTab));
+  document.getElementById('fab').style.display = activeTab==='data' ? 'none':'flex';
+}
+document.querySelectorAll('nav.tabs button').forEach(b=>{
+  b.addEventListener('click',()=>{ activeTab=b.dataset.tab; setActiveTabUI(); render(); });
+});
+
+/* ---------- boot ---------- */
+(async function(){
+  await openDB();
+  await loadAll();
+  setActiveTabUI();
+  render();
+})();
+</script>
+</body>
+</html>
