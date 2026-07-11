@@ -863,9 +863,16 @@ function initGis(){
     callback:''
   });
 }
+async function ensureTokenClient(){
+  if(tokenClient) return true;
+  const ready=await waitForGis(8000);
+  if(ready && !tokenClient) initGis();
+  return !!tokenClient;
+}
 function requestToken(interactive){
-  return new Promise((resolve,reject)=>{
-    if(!tokenClient){ reject(new Error('unavailable')); return; }
+  return new Promise(async(resolve,reject)=>{
+    const ok=await ensureTokenClient();
+    if(!ok || !tokenClient){ reject(new Error('unavailable')); return; }
     let settled=false;
     const to=setTimeout(()=>{ if(!settled){settled=true; reject(new Error('timeout'));} }, interactive?60000:6000);
     tokenClient.callback=(resp)=>{
@@ -1005,8 +1012,9 @@ function scheduleSync(){
 }
 
 async function connectGoogle(){
-  if(!tokenClient){ toast('Google sign-in unavailable — check connection'); return; }
   setSyncStatus('Connecting…');
+  const ok=await ensureTokenClient();
+  if(!ok){ setSyncStatus(''); toast('Google sign-in unavailable — check connection'); return; }
   try{
     await requestToken(true);
     googleConnected=true;
