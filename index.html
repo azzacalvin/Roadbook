@@ -17,6 +17,11 @@
     --rust:#C1502B;
     --eucalypt:#3F8F5C;
     --ochre:#C98A2C;
+    --rust-tint:#F7E3DA;
+    --eucalypt-tint:#E3F0E7;
+    --highway-tint:#FCE4D3;
+    --ochre-tint:#F7EAD2;
+    --ink-soft-tint:#EDEAE3;
     --line:#E7E1D2;
     --danger:#C0392B;
     --radius:14px;
@@ -32,7 +37,7 @@
     color:var(--ink);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     -webkit-tap-highlight-color:transparent;
-    padding-bottom:88px;
+    padding-bottom:96px;
   }
   @media (prefers-reduced-motion: reduce){
     *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
@@ -49,20 +54,29 @@
 
   header.top{
     position:sticky; top:0; z-index:20;
-    background:var(--paper-dark);
-    box-shadow:var(--shadow-sm);
-    border-radius:0 0 20px 20px;
-    padding:16px 16px 12px;
-  }
-  header.top .titlerow{
-    display:flex; align-items:center; justify-content:space-between;
+    background:var(--paper);
+    padding:18px 16px 4px;
   }
   header.top .titlerow h1{
-    font-size:22px;
+    font-size:24px;
   }
-  header.top .titlerow .sub{
-    font-size:10px; letter-spacing:0.04em; color:var(--ink-soft); text-transform:uppercase;
-    font-weight:700; background:var(--paper-darker); padding:4px 10px; border-radius:999px;
+  .subtitle{
+    font-size:12.5px; color:var(--ink-soft); margin-top:2px; font-weight:500;
+  }
+
+  .hero{
+    margin-top:14px;
+    background:linear-gradient(135deg, var(--highway), #F5A669);
+    border-radius:20px;
+    padding:16px 18px 14px;
+    box-shadow:var(--shadow-md);
+    color:#fff;
+  }
+  .hero-label{
+    font-size:10.5px; letter-spacing:0.06em; text-transform:uppercase; font-weight:700; opacity:0.85;
+  }
+  .hero-title{
+    font-size:16.5px; font-weight:800; margin-top:3px; letter-spacing:-0.01em;
   }
 
   .odometer{
@@ -92,34 +106,38 @@
     font-weight:600;
     color:var(--ink-soft);
   }
+  .hero .odometer .cell{background:rgba(255,255,255,0.2);}
+  .hero .odometer .cell .val{color:#fff;}
+  .hero .odometer .cell .lbl{color:rgba(255,255,255,0.85);}
 
   nav.tabs{
+    position:fixed; left:0; right:0; bottom:0; z-index:30;
     display:flex;
-    margin-top:14px;
     gap:2px;
-    background:var(--paper-darker);
-    border-radius:999px;
-    padding:3px;
+    background:var(--paper-dark);
+    border-top:1px solid var(--line);
+    box-shadow:0 -6px 18px rgba(33,31,27,0.07);
+    padding:8px 8px calc(8px + env(safe-area-inset-bottom));
   }
   nav.tabs button{
     flex:1;
+    display:flex; flex-direction:column; align-items:center; gap:3px;
     background:none;
     border:none;
-    border-radius:999px;
-    padding:8px 2px;
-    font-size:10.5px;
-    letter-spacing:0.04em;
-    text-transform:uppercase;
-    font-weight:700;
+    border-radius:14px;
+    padding:6px 2px;
     color:var(--ink-soft);
     cursor:pointer;
     font-family:inherit;
-    transition:background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+    transition:background 0.15s ease, color 0.15s ease;
+  }
+  nav.tabs button .tabicon{font-size:19px; line-height:1;}
+  nav.tabs button .tablabel{
+    font-size:10px; letter-spacing:0.02em; text-transform:uppercase; font-weight:700;
   }
   nav.tabs button.active{
-    color:var(--ink);
-    background:var(--paper-dark);
-    box-shadow:var(--shadow-sm);
+    color:var(--highway);
+    background:var(--highway-tint);
   }
 
   main{padding:16px 16px 8px;}
@@ -147,8 +165,11 @@
   }
   .row:active{transform:scale(0.99); box-shadow:none;}
   .row .tag{
-    flex:0 0 4px;
-    border-radius:999px;
+    flex:0 0 40px;
+    width:40px; height:40px;
+    border-radius:12px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:18px;
   }
   .row .body{flex:1; min-width:0;}
   .row .rowtop{display:flex; justify-content:space-between; gap:8px; align-items:baseline;}
@@ -162,10 +183,10 @@
     font-weight:800; font-size:14.5px; white-space:nowrap; font-variant-numeric:tabular-nums;
   }
 
-  .tag.campsite{background:var(--eucalypt);}
-  .tag.fuel{background:var(--rust);}
-  .tag.poi{background:var(--highway);}
-  .tag.note{background:var(--ochre);}
+  .tag.campsite{background:var(--eucalypt-tint);}
+  .tag.fuel{background:var(--rust-tint);}
+  .tag.poi{background:var(--highway-tint);}
+  .tag.note{background:var(--ochre-tint);}
   .kind.campsite{color:var(--eucalypt);}
   .kind.fuel{color:var(--rust);}
   .kind.poi{color:var(--highway);}
@@ -182,7 +203,7 @@
   .photogrid img{width:100%; height:100%; object-fit:cover; display:block;}
 
   .fab{
-    position:fixed; right:18px; bottom:22px; z-index:25;
+    position:fixed; right:18px; bottom:88px; z-index:25;
     width:58px; height:58px; border-radius:50%;
     background:linear-gradient(135deg, var(--highway), #F0955C);
     color:var(--highway-ink);
@@ -291,7 +312,7 @@
   .datapage .block h3{font-size:13.5px; font-weight:800; margin-bottom:8px;}
   .datapage .block p{font-size:12.5px; color:var(--ink-soft); margin:0 0 12px; line-height:1.5;}
   .toast{
-    position:fixed; left:50%; bottom:96px; transform:translateX(-50%);
+    position:fixed; left:50%; bottom:112px; transform:translateX(-50%);
     background:var(--ink); color:var(--paper-dark); padding:10px 18px; font-size:12.5px; font-weight:600;
     border-radius:999px; box-shadow:var(--shadow-md); z-index:60; opacity:0; pointer-events:none; transition:opacity 0.2s ease;
   }
@@ -304,23 +325,28 @@
 <header class="top">
   <div class="titlerow">
     <h1 class="display">Roadbook</h1>
-    <span class="sub" id="tripSpan">—</span>
+    <div class="subtitle">Your trip, logged as you go</div>
   </div>
-  <div class="odometer">
-    <div class="cell"><div class="val" id="odEntries">0</div><div class="lbl">Stops</div></div>
-    <div class="cell"><div class="val" id="odKm">0</div><div class="lbl">Km logged</div></div>
-    <div class="cell"><div class="val" id="odSpend">$0</div><div class="lbl">Spent</div></div>
-    <div class="cell"><div class="val" id="odDays">0</div><div class="lbl">Days</div></div>
+  <div class="hero">
+    <div class="hero-label">On the road</div>
+    <div class="hero-title" id="tripSpan">—</div>
+    <div class="odometer">
+      <div class="cell"><div class="val" id="odEntries">0</div><div class="lbl">Stops</div></div>
+      <div class="cell"><div class="val" id="odKm">0</div><div class="lbl">Km logged</div></div>
+      <div class="cell"><div class="val" id="odSpend">$0</div><div class="lbl">Spent</div></div>
+      <div class="cell"><div class="val" id="odDays">0</div><div class="lbl">Days</div></div>
+    </div>
   </div>
-  <nav class="tabs">
-    <button data-tab="log" class="active">Log</button>
-    <button data-tab="spend">Spend</button>
-    <button data-tab="photos">Photos</button>
-    <button data-tab="data">Data</button>
-  </nav>
 </header>
 
 <main id="main"></main>
+
+<nav class="tabs">
+  <button data-tab="log" class="active"><span class="tabicon">🧭</span><span class="tablabel">Log</span></button>
+  <button data-tab="spend"><span class="tabicon">💳</span><span class="tablabel">Spend</span></button>
+  <button data-tab="photos"><span class="tabicon">🖼️</span><span class="tablabel">Photos</span></button>
+  <button data-tab="data"><span class="tabicon">⚙️</span><span class="tablabel">Data</span></button>
+</nav>
 
 <button class="fab" id="fab">+</button>
 
@@ -477,6 +503,15 @@ function toast(msg){
 function typeLabel(t){
   return {campsite:'Campsite',poi:'Point of interest',fuel:'Fuel stop',note:'Note'}[t]||t;
 }
+function typeIcon(t){
+  return {campsite:'🏕️',poi:'📍',fuel:'⛽',note:'📝'}[t]||'📍';
+}
+function catIcon(cat){
+  return {Fuel:'⛽','Camp fees':'🏕️',Food:'🍽️',Repairs:'🔧',Other:'💳'}[cat]||'💳';
+}
+function catTint(cat){
+  return {Fuel:'var(--rust-tint)','Camp fees':'var(--eucalypt-tint)',Food:'var(--ochre-tint)',Repairs:'var(--highway-tint)',Other:'var(--ink-soft-tint)'}[cat]||'var(--ink-soft-tint)';
+}
 
 /* ---------- odometer / header ---------- */
 function renderOdometer(){
@@ -519,7 +554,7 @@ function renderLog(main){
     const loc = e.lat!=null ? `${e.lat.toFixed(4)}, ${e.lon.toFixed(4)}` : 'No location';
     const photoCount = (e.photoIds||[]).length;
     return `<div class="row" data-open-entry="${e.id}">
-      <div class="tag ${e.type}"></div>
+      <div class="tag ${e.type}">${typeIcon(e.type)}</div>
       <div class="body">
         <div class="rowtop">
           <span class="kind ${e.type}">${typeLabel(e.type)}</span>
@@ -545,7 +580,7 @@ function renderSpend(main){
     const odo = e.odo ? 'Odo '+e.odo+'km' : '';
     const meta=[odo,loc].filter(Boolean).join(' · ');
     return `<div class="row" data-open-expense="${e.id}">
-      <div class="tag fuel" style="background:${catColor(e.category)}"></div>
+      <div class="tag" style="background:${catTint(e.category)}">${catIcon(e.category)}</div>
       <div class="body">
         <div class="rowtop">
           <span class="kind" style="color:${catColor(e.category)}">${e.category}</span>
