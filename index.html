@@ -5,39 +5,37 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Roadbook</title>
 <link rel="manifest" href="data:application/manifest+json,{}">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   :root{
-    --paper:#F6F3EC;
-    --paper-dark:#FFFFFF;
-    --paper-darker:#ECE7DA;
-    --ink:#211F1B;
-    --ink-soft:#79726A;
-    --highway:#E2632A;
-    --highway-ink:#FFFFFF;
-    --rust:#C1502B;
-    --eucalypt:#3F8F5C;
+    --paper:#E9E3D0;
+    --paper-dark:#DCD3B8;
+    --paper-darker:#CFC5A4;
+    --ink:#2B2A25;
+    --ink-soft:#5B584C;
+    --highway:#29506B;
+    --highway-ink:#EAF0F4;
+    --rust:#B5502A;
+    --eucalypt:#5F7A45;
     --ochre:#C98A2C;
-    --rust-tint:#F7E3DA;
-    --eucalypt-tint:#E3F0E7;
-    --highway-tint:#FCE4D3;
-    --ochre-tint:#F7EAD2;
-    --ink-soft-tint:#EDEAE3;
-    --line:#E7E1D2;
-    --danger:#C0392B;
-    --radius:14px;
-    --shadow-sm:0 1px 2px rgba(33,31,27,0.05), 0 2px 6px rgba(33,31,27,0.06);
-    --shadow-md:0 4px 16px rgba(33,31,27,0.10);
-    --shadow-lg:0 14px 36px rgba(33,31,27,0.20);
+    --line:#B7AE92;
+    --danger:#9E3B2E;
+    --radius:2px;
   }
   *{box-sizing:border-box;}
   html,body{height:100%;}
   body{
     margin:0;
     background:var(--paper);
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size:28px 28px;
+    background-attachment:fixed;
     color:var(--ink);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     -webkit-tap-highlight-color:transparent;
-    padding-bottom:96px;
+    padding-bottom:84px;
   }
   @media (prefers-reduced-motion: reduce){
     *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
@@ -46,275 +44,213 @@
 
   h1,h2,h3{margin:0;}
   .display{
-    font-family:inherit;
-    text-transform:none;
-    letter-spacing:-0.01em;
-    font-weight:800;
+    font-family:"Courier New",ui-monospace,monospace;
+    text-transform:uppercase;
+    letter-spacing:0.14em;
+    font-weight:700;
   }
 
   header.top{
     position:sticky; top:0; z-index:20;
     background:var(--paper);
-    padding:18px 16px 4px;
+    border-bottom:2px solid var(--ink);
+    padding:14px 16px 10px;
+  }
+  header.top .titlerow{
+    display:flex; align-items:baseline; justify-content:space-between;
   }
   header.top .titlerow h1{
-    font-size:24px;
+    font-size:20px;
   }
-  .subtitle{
-    font-size:12.5px; color:var(--ink-soft); margin-top:2px; font-weight:500;
-  }
-
-  .hero{
-    margin-top:14px;
-    background:linear-gradient(135deg, var(--highway), #F5A669);
-    border-radius:20px;
-    padding:16px 18px 14px;
-    box-shadow:var(--shadow-md);
-    color:#fff;
-  }
-  .hero-label{
-    font-size:10.5px; letter-spacing:0.06em; text-transform:uppercase; font-weight:700; opacity:0.85;
-  }
-  .hero-title{
-    font-size:16.5px; font-weight:800; margin-top:3px; letter-spacing:-0.01em;
+  header.top .titlerow .sub{
+    font-size:10px; letter-spacing:0.12em; color:var(--ink-soft); text-transform:uppercase;
   }
 
   .odometer{
-    margin-top:14px;
+    margin-top:12px;
     display:grid;
     grid-template-columns:repeat(4,1fr);
-    gap:8px;
+    gap:1px;
+    background:var(--ink);
+    border:1px solid var(--ink);
   }
   .odometer .cell{
-    background:var(--paper-darker);
-    border-radius:12px;
-    padding:9px 4px 8px;
+    background:var(--paper-dark);
+    padding:8px 4px 7px;
     text-align:center;
   }
   .odometer .cell .val{
+    font-family:ui-monospace,"Courier New",monospace;
     font-variant-numeric:tabular-nums;
     font-size:18px;
-    font-weight:800;
-    letter-spacing:-0.01em;
-    color:var(--ink);
+    font-weight:700;
+    letter-spacing:0.02em;
   }
   .odometer .cell .lbl{
     margin-top:2px;
     font-size:8.5px;
-    letter-spacing:0.07em;
+    letter-spacing:0.1em;
     text-transform:uppercase;
-    font-weight:600;
     color:var(--ink-soft);
   }
-  .hero .odometer .cell{background:rgba(255,255,255,0.2);}
-  .hero .odometer .cell .val{color:#fff;}
-  .hero .odometer .cell .lbl{color:rgba(255,255,255,0.85);}
 
   nav.tabs{
-    position:fixed; left:0; right:0; bottom:0; z-index:30;
     display:flex;
-    gap:2px;
-    background:var(--paper-dark);
-    border-top:1px solid var(--line);
-    box-shadow:0 -6px 18px rgba(33,31,27,0.07);
-    padding:8px 8px calc(8px + env(safe-area-inset-bottom));
+    border-bottom:1px solid var(--ink);
+    margin-top:12px;
+    gap:0;
   }
   nav.tabs button{
     flex:1;
-    display:flex; flex-direction:column; align-items:center; gap:3px;
     background:none;
     border:none;
-    border-radius:14px;
-    padding:6px 2px;
+    border-bottom:3px solid transparent;
+    padding:9px 2px 8px;
+    font-size:10.5px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    font-weight:700;
     color:var(--ink-soft);
     cursor:pointer;
     font-family:inherit;
-    transition:background 0.15s ease, color 0.15s ease;
-  }
-  nav.tabs button .tabicon{font-size:19px; line-height:1;}
-  nav.tabs button .tablabel{
-    font-size:10px; letter-spacing:0.02em; text-transform:uppercase; font-weight:700;
   }
   nav.tabs button.active{
-    color:var(--highway);
-    background:var(--highway-tint);
+    color:var(--ink);
+    border-bottom-color:var(--highway);
   }
 
-  main{padding:16px 16px 8px;}
+  main{padding:14px 16px 8px;}
   .empty{
-    padding:40px 16px;
+    padding:36px 12px;
     text-align:center;
     color:var(--ink-soft);
     font-size:13px;
-    background:var(--paper-dark);
-    border-radius:var(--radius);
-    box-shadow:var(--shadow-sm);
+    border:1px dashed var(--line);
   }
-  .empty .display{display:block; font-size:14px; margin-bottom:6px; color:var(--ink);}
+  .empty .display{display:block; font-size:13px; margin-bottom:6px; color:var(--ink);}
 
-  .ledger{display:flex; flex-direction:column; gap:8px;}
+  .ledger{border-top:1px solid var(--ink);}
   .row{
     display:flex;
     gap:10px;
-    padding:13px 14px;
-    background:var(--paper-dark);
-    border-radius:var(--radius);
-    box-shadow:var(--shadow-sm);
+    padding:11px 2px;
+    border-bottom:1px solid var(--line);
     cursor:pointer;
-    transition:transform 0.1s ease, box-shadow 0.1s ease;
   }
-  .row:active{transform:scale(0.99); box-shadow:none;}
+  .row:active{background:var(--paper-dark);}
   .row .tag{
-    flex:0 0 40px;
-    width:40px; height:40px;
-    border-radius:12px;
-    display:flex; align-items:center; justify-content:center;
-    font-size:18px;
+    flex:0 0 5px;
+    border-radius:1px;
   }
   .row .body{flex:1; min-width:0;}
   .row .rowtop{display:flex; justify-content:space-between; gap:8px; align-items:baseline;}
   .row .kind{
-    font-size:10px; letter-spacing:0.05em; text-transform:uppercase; font-weight:700;
+    font-size:9.5px; letter-spacing:0.1em; text-transform:uppercase; font-weight:700;
   }
-  .row .date{font-size:10.5px; color:var(--ink-soft);}
-  .row .note{font-size:14.5px; margin-top:3px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-  .row .meta{font-size:11px; color:var(--ink-soft); margin-top:3px;}
+  .row .date{font-size:10px; color:var(--ink-soft); font-family:ui-monospace,monospace;}
+  .row .note{font-size:14px; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .row .meta{font-size:10.5px; color:var(--ink-soft); margin-top:2px; font-family:ui-monospace,monospace;}
   .row .amount{
-    font-weight:800; font-size:14.5px; white-space:nowrap; font-variant-numeric:tabular-nums;
+    font-family:ui-monospace,monospace; font-weight:700; font-size:14px; white-space:nowrap;
   }
 
-  .tag.campsite{background:var(--eucalypt-tint);}
-  .tag.fuel{background:var(--rust-tint);}
-  .tag.poi{background:var(--highway-tint);}
-  .tag.note{background:var(--ochre-tint);}
+  .tag.campsite{background:var(--eucalypt);}
+  .tag.fuel{background:var(--rust);}
+  .tag.poi{background:var(--highway);}
+  .tag.note{background:var(--ochre);}
   .kind.campsite{color:var(--eucalypt);}
   .kind.fuel{color:var(--rust);}
   .kind.poi{color:var(--highway);}
   .kind.note{color:var(--ochre);}
 
   .photogrid{
-    display:grid; grid-template-columns:repeat(3,1fr); gap:6px;
+    display:grid; grid-template-columns:repeat(3,1fr); gap:3px;
   }
   .photogrid .thumb{
-    aspect-ratio:1; overflow:hidden; background:var(--paper-darker); border-radius:10px;
-    box-shadow:var(--shadow-sm);
+    aspect-ratio:1; overflow:hidden; background:var(--paper-dark); border:1px solid var(--line);
     position:relative; cursor:pointer;
   }
   .photogrid img{width:100%; height:100%; object-fit:cover; display:block;}
 
   .fab{
-    position:fixed; right:18px; bottom:88px; z-index:25;
-    width:58px; height:58px; border-radius:50%;
-    background:linear-gradient(135deg, var(--highway), #F0955C);
-    color:var(--highway-ink);
-    border:none; font-size:27px; font-weight:400;
-    box-shadow:var(--shadow-lg);
+    position:fixed; right:18px; bottom:22px; z-index:25;
+    width:56px; height:56px; border-radius:50%;
+    background:var(--highway); color:var(--highway-ink);
+    border:none; font-size:26px; font-weight:400;
+    box-shadow:0 2px 6px rgba(0,0,0,0.35);
     cursor:pointer;
     display:flex; align-items:center; justify-content:center;
-    transition:transform 0.12s ease;
   }
-  .fab:active{transform:scale(0.92);}
+  .fab:active{transform:scale(0.94);}
 
   .sheet-backdrop{
-    position:fixed; inset:0; background:rgba(24,20,14,0.4); z-index:40;
-    backdrop-filter:blur(2px);
+    position:fixed; inset:0; background:rgba(20,18,12,0.45); z-index:40;
     opacity:0; pointer-events:none; transition:opacity 0.18s ease;
   }
   .sheet-backdrop.open{opacity:1; pointer-events:auto;}
   .sheet{
     position:fixed; left:0; right:0; bottom:0; z-index:41;
-    background:var(--paper-dark);
-    border-radius:24px 24px 0 0;
-    box-shadow:var(--shadow-lg);
+    background:var(--paper);
+    border-top:2px solid var(--ink);
     max-height:88vh; overflow-y:auto;
     transform:translateY(100%);
     transition:transform 0.22s ease;
-    padding:18px 18px calc(20px + env(safe-area-inset-bottom));
+    padding:16px 16px calc(20px + env(safe-area-inset-bottom));
   }
   .sheet.open{transform:translateY(0);}
-  .sheet h2{font-size:18px; margin-bottom:16px;}
+  .sheet h2{font-size:15px; margin-bottom:14px;}
   .sheet .closebtn{
-    position:absolute; top:14px; right:16px; width:30px; height:30px;
-    background:var(--paper-darker); border:none; border-radius:50%;
-    font-size:16px; color:var(--ink-soft); cursor:pointer; padding:0;
-    display:flex; align-items:center; justify-content:center;
+    position:absolute; top:12px; right:14px; background:none; border:none;
+    font-size:18px; color:var(--ink-soft); cursor:pointer; padding:4px;
   }
 
-  .field{margin-bottom:14px;}
+  .field{margin-bottom:12px;}
   .field label{
-    display:block; font-size:10.5px; text-transform:uppercase; letter-spacing:0.06em;
-    color:var(--ink-soft); margin-bottom:6px; font-weight:700;
+    display:block; font-size:10px; text-transform:uppercase; letter-spacing:0.09em;
+    color:var(--ink-soft); margin-bottom:4px; font-weight:700;
   }
   .field input[type=text], .field input[type=number], .field input[type=date], .field textarea, .field select{
-    width:100%; padding:11px 12px; border:1.5px solid var(--line); background:var(--paper);
-    font-size:14.5px; font-family:inherit; color:var(--ink); border-radius:var(--radius);
-    transition:border-color 0.15s ease, box-shadow 0.15s ease;
-  }
-  .field input:focus, .field textarea:focus, .field select:focus{
-    outline:none; border-color:var(--highway); box-shadow:0 0 0 3px rgba(226,99,42,0.15);
+    width:100%; padding:9px 10px; border:1px solid var(--ink); background:var(--paper-dark);
+    font-size:14px; font-family:inherit; color:var(--ink); border-radius:var(--radius);
   }
   .field textarea{resize:vertical; min-height:60px;}
   .typegrid{display:grid; grid-template-columns:repeat(4,1fr); gap:6px;}
   .typegrid button{
-    padding:9px 2px; border:1.5px solid var(--line); background:var(--paper); border-radius:999px;
-    font-size:9.5px; text-transform:uppercase; letter-spacing:0.04em; font-weight:700; cursor:pointer;
-    color:var(--ink-soft); font-family:inherit; transition:background 0.15s ease, color 0.15s ease;
+    padding:8px 2px; border:1px solid var(--ink); background:var(--paper-dark); border-radius:var(--radius);
+    font-size:9.5px; text-transform:uppercase; letter-spacing:0.06em; font-weight:700; cursor:pointer;
+    color:var(--ink-soft); font-family:inherit;
   }
-  .typegrid button.selected{background:var(--ink); color:var(--paper-dark); border-color:var(--ink);}
-
-  .geosearch{position:relative; margin-bottom:8px;}
-  .geosearch-input{
-    width:100%; padding:11px 12px; border:1.5px solid var(--line); background:var(--paper);
-    font-size:14px; font-family:inherit; color:var(--ink); border-radius:var(--radius);
-    transition:border-color 0.15s ease, box-shadow 0.15s ease;
-  }
-  .geosearch-input:focus{
-    outline:none; border-color:var(--highway); box-shadow:0 0 0 3px rgba(226,99,42,0.15);
-  }
-  .geosearch-results{
-    display:none; position:absolute; left:0; right:0; top:calc(100% + 6px);
-    background:var(--paper-dark); border:1px solid var(--line); border-radius:var(--radius);
-    box-shadow:var(--shadow-md); max-height:190px; overflow-y:auto; z-index:5;
-  }
-  .geosearch-results.open{display:block;}
-  .geosearch-item{padding:10px 12px; font-size:13px; color:var(--ink); cursor:pointer; border-bottom:1px solid var(--line);}
-  .geosearch-item:last-child{border-bottom:none;}
-  .geosearch-item:active{background:var(--paper-darker);}
-  .geosearch-item.geosearch-status{color:var(--ink-soft); cursor:default;}
+  .typegrid button.selected{background:var(--ink); color:var(--paper);}
 
   .geobtn, .photobtn{
-    width:100%; padding:11px 12px; border:1.5px dashed var(--line); background:var(--paper); border-radius:var(--radius);
-    font-size:13px; cursor:pointer; color:var(--ink); font-family:inherit; text-align:left;
-    transition:border-color 0.15s ease, background 0.15s ease;
+    width:100%; padding:10px; border:1px dashed var(--ink); background:none; border-radius:var(--radius);
+    font-size:12.5px; cursor:pointer; color:var(--ink); font-family:inherit; text-align:left;
   }
-  .geobtn.got, .photobtn.got{border-style:solid; border-color:var(--highway); background:rgba(226,99,42,0.06);}
-  .geo-readout{font-variant-numeric:tabular-nums; font-size:11.5px; color:var(--ink-soft); margin-top:6px;}
+  .geobtn.got, .photobtn.got{border-style:solid; background:var(--paper-dark);}
+  .geo-readout{font-family:ui-monospace,monospace; font-size:11px; color:var(--ink-soft); margin-top:4px;}
 
   .thumbrow{display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;}
-  .thumbrow .t{width:56px; height:56px; border-radius:8px; overflow:hidden; box-shadow:var(--shadow-sm);}
+  .thumbrow .t{width:56px; height:56px; border:1px solid var(--line); overflow:hidden;}
   .thumbrow .t img{width:100%; height:100%; object-fit:cover;}
 
-  .actions{display:flex; gap:10px; margin-top:18px;}
+  .actions{display:flex; gap:8px; margin-top:16px;}
   .btn{
-    flex:1; padding:13px; border:none; border-radius:999px; font-size:13.5px;
-    letter-spacing:0.01em; font-weight:700; cursor:pointer; font-family:inherit;
-    transition:transform 0.1s ease, opacity 0.1s ease;
+    flex:1; padding:12px; border:none; border-radius:var(--radius); font-size:12.5px;
+    text-transform:uppercase; letter-spacing:0.08em; font-weight:700; cursor:pointer; font-family:inherit;
   }
-  .btn:active{transform:scale(0.97);}
-  .btn.primary{background:linear-gradient(135deg, var(--highway), #F0955C); color:var(--highway-ink); box-shadow:var(--shadow-sm);}
-  .btn.ghost{background:var(--paper); border:1.5px solid var(--line); color:var(--ink);}
-  .btn.danger{background:var(--danger); color:#FDEEEB;}
+  .btn.primary{background:var(--highway); color:var(--highway-ink);}
+  .btn.ghost{background:none; border:1px solid var(--ink); color:var(--ink);}
+  .btn.danger{background:var(--danger); color:#F4E9E4;}
 
   .datapage .block{
-    border:none; padding:16px; margin-bottom:12px; background:var(--paper-dark);
-    border-radius:var(--radius); box-shadow:var(--shadow-sm);
+    border:1px solid var(--ink); padding:14px; margin-bottom:12px; background:var(--paper-dark);
   }
-  .datapage .block h3{font-size:13.5px; font-weight:800; margin-bottom:8px;}
-  .datapage .block p{font-size:12.5px; color:var(--ink-soft); margin:0 0 12px; line-height:1.5;}
+  .datapage .block h3{font-size:12px; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:8px;}
+  .datapage .block p{font-size:12px; color:var(--ink-soft); margin:0 0 10px;}
   .toast{
-    position:fixed; left:50%; bottom:112px; transform:translateX(-50%);
-    background:var(--ink); color:var(--paper-dark); padding:10px 18px; font-size:12.5px; font-weight:600;
-    border-radius:999px; box-shadow:var(--shadow-md); z-index:60; opacity:0; pointer-events:none; transition:opacity 0.2s ease;
+    position:fixed; left:50%; bottom:96px; transform:translateX(-50%);
+    background:var(--ink); color:var(--paper); padding:9px 16px; font-size:12.5px;
+    border-radius:2px; z-index:60; opacity:0; pointer-events:none; transition:opacity 0.2s ease;
   }
   .toast.show{opacity:1;}
   input[type=file]{display:none;}
@@ -325,28 +261,23 @@
 <header class="top">
   <div class="titlerow">
     <h1 class="display">Roadbook</h1>
-    <div class="subtitle">Your trip, logged as you go</div>
+    <span class="sub" id="tripSpan">—</span>
   </div>
-  <div class="hero">
-    <div class="hero-label">On the road</div>
-    <div class="hero-title" id="tripSpan">—</div>
-    <div class="odometer">
-      <div class="cell"><div class="val" id="odEntries">0</div><div class="lbl">Stops</div></div>
-      <div class="cell"><div class="val" id="odKm">0</div><div class="lbl">Km logged</div></div>
-      <div class="cell"><div class="val" id="odSpend">$0</div><div class="lbl">Spent</div></div>
-      <div class="cell"><div class="val" id="odDays">0</div><div class="lbl">Days</div></div>
-    </div>
+  <div class="odometer">
+    <div class="cell"><div class="val" id="odEntries">0</div><div class="lbl">Stops</div></div>
+    <div class="cell"><div class="val" id="odKm">0</div><div class="lbl">Km logged</div></div>
+    <div class="cell"><div class="val" id="odSpend">$0</div><div class="lbl">Spent</div></div>
+    <div class="cell"><div class="val" id="odDays">0</div><div class="lbl">Days</div></div>
   </div>
+  <nav class="tabs">
+    <button data-tab="log" class="active">Log</button>
+    <button data-tab="spend">Spend</button>
+    <button data-tab="photos">Photos</button>
+    <button data-tab="data">Data</button>
+  </nav>
 </header>
 
 <main id="main"></main>
-
-<nav class="tabs">
-  <button data-tab="log" class="active"><span class="tabicon">🧭</span><span class="tablabel">Log</span></button>
-  <button data-tab="spend"><span class="tabicon">💳</span><span class="tablabel">Spend</span></button>
-  <button data-tab="photos"><span class="tabicon">🖼️</span><span class="tablabel">Photos</span></button>
-  <button data-tab="data"><span class="tabicon">⚙️</span><span class="tablabel">Data</span></button>
-</nav>
 
 <button class="fab" id="fab">+</button>
 
@@ -371,11 +302,7 @@
   </div>
   <div class="field">
     <label>Location</label>
-    <div class="geosearch">
-      <input type="text" class="geosearch-input" id="logGeoSearch" placeholder="🔎 Search a place…" autocomplete="off">
-      <div class="geosearch-results" id="logGeoResults"></div>
-    </div>
-    <button class="geobtn" id="logGeoBtn">📍 Use current location</button>
+    <button class="geobtn" id="logGeoBtn">📍 Capture current location</button>
     <div class="geo-readout" id="logGeoReadout"></div>
   </div>
   <div class="field">
@@ -418,11 +345,7 @@
   </div>
   <div class="field">
     <label>Location</label>
-    <div class="geosearch">
-      <input type="text" class="geosearch-input" id="spendGeoSearch" placeholder="🔎 Search a place…" autocomplete="off">
-      <div class="geosearch-results" id="spendGeoResults"></div>
-    </div>
-    <button class="geobtn" id="spendGeoBtn">📍 Use current location</button>
+    <button class="geobtn" id="spendGeoBtn">📍 Capture current location</button>
     <div class="geo-readout" id="spendGeoReadout"></div>
   </div>
   <div class="actions">
@@ -441,7 +364,7 @@
 
 <script>
 /* ---------- storage ---------- */
-const DB_NAME='roadbook', DB_VER=1;
+const DB_NAME='roadbook', DB_VER=2;
 let db;
 function openDB(){
   return new Promise((res,rej)=>{
@@ -451,6 +374,7 @@ function openDB(){
       if(!d.objectStoreNames.contains('entries')) d.createObjectStore('entries',{keyPath:'id'});
       if(!d.objectStoreNames.contains('expenses')) d.createObjectStore('expenses',{keyPath:'id'});
       if(!d.objectStoreNames.contains('photos')) d.createObjectStore('photos',{keyPath:'id'});
+      if(!d.objectStoreNames.contains('tombstones')) d.createObjectStore('tombstones',{keyPath:'id'});
     };
     r.onsuccess=e=>{db=e.target.result; res(db);};
     r.onerror=e=>rej(e);
@@ -469,7 +393,7 @@ function idClear(store){return new Promise(res=>{const r=tx(store,'readwrite').c
 function newId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8);}
 
 /* ---------- state ---------- */
-let entries=[], expenses=[], photos=[];
+let entries=[], expenses=[], photos=[], tombstones=[];
 let activeTab='log';
 let pendingGeo={log:null, spend:null};
 let pendingPhotos=[]; // {id, dataUrl} for current log sheet
@@ -478,6 +402,7 @@ async function loadAll(){
   entries = (await idAll('entries')).sort((a,b)=>b.ts-a.ts);
   expenses = (await idAll('expenses')).sort((a,b)=>b.ts-a.ts);
   photos = await idAll('photos');
+  tombstones = await idAll('tombstones');
 }
 
 /* ---------- helpers ---------- */
@@ -502,15 +427,6 @@ function toast(msg){
 }
 function typeLabel(t){
   return {campsite:'Campsite',poi:'Point of interest',fuel:'Fuel stop',note:'Note'}[t]||t;
-}
-function typeIcon(t){
-  return {campsite:'🏕️',poi:'📍',fuel:'⛽',note:'📝'}[t]||'📍';
-}
-function catIcon(cat){
-  return {Fuel:'⛽','Camp fees':'🏕️',Food:'🍽️',Repairs:'🔧',Other:'💳'}[cat]||'💳';
-}
-function catTint(cat){
-  return {Fuel:'var(--rust-tint)','Camp fees':'var(--eucalypt-tint)',Food:'var(--ochre-tint)',Repairs:'var(--highway-tint)',Other:'var(--ink-soft-tint)'}[cat]||'var(--ink-soft-tint)';
 }
 
 /* ---------- odometer / header ---------- */
@@ -554,7 +470,7 @@ function renderLog(main){
     const loc = e.lat!=null ? `${e.lat.toFixed(4)}, ${e.lon.toFixed(4)}` : 'No location';
     const photoCount = (e.photoIds||[]).length;
     return `<div class="row" data-open-entry="${e.id}">
-      <div class="tag ${e.type}">${typeIcon(e.type)}</div>
+      <div class="tag ${e.type}"></div>
       <div class="body">
         <div class="rowtop">
           <span class="kind ${e.type}">${typeLabel(e.type)}</span>
@@ -580,7 +496,7 @@ function renderSpend(main){
     const odo = e.odo ? 'Odo '+e.odo+'km' : '';
     const meta=[odo,loc].filter(Boolean).join(' · ');
     return `<div class="row" data-open-expense="${e.id}">
-      <div class="tag" style="background:${catTint(e.category)}">${catIcon(e.category)}</div>
+      <div class="tag fuel" style="background:${catColor(e.category)}"></div>
       <div class="body">
         <div class="rowtop">
           <span class="kind" style="color:${catColor(e.category)}">${e.category}</span>
@@ -617,6 +533,20 @@ function renderPhotos(main){
 function renderData(main){
   main.innerHTML=`<div class="datapage">
     <div class="block">
+      <h3>Sync across devices</h3>
+      <p>${googleConnected
+        ? 'Connected to Google Drive. Changes made on this device and your other device merge automatically whenever either is online.'
+        : 'Connect your Google account so this device and your other device (phone or laptop) share the same log via a private file in your Drive. Only that one file is touched — nothing else in your Drive is accessed.'}</p>
+      <div class="geo-readout" id="syncStatus"></div>
+      ${googleConnected ? `
+        <div class="meta" style="margin:8px 0 10px;">Last synced: ${lastSyncAt?fmtDate(+lastSyncAt)+' '+fmtTime(+lastSyncAt):'never yet'}</div>
+        <button class="btn primary" id="syncNowBtn" style="width:100%; margin-bottom:8px;">Sync now</button>
+        <button class="btn ghost" id="disconnectBtn" style="width:100%;">Disconnect Google account</button>
+      ` : `
+        <button class="btn primary" id="connectBtn" style="width:100%;">Connect Google account</button>
+      `}
+    </div>
+    <div class="block">
       <h3>Back up everything</h3>
       <p>Saves all stops, expenses, and photos to one file. Opens Android's share sheet — pick Drive to save it straight there, then open it on your laptop at drive.google.com.</p>
       <button class="btn primary" id="exportJson" style="width:100%">Save full backup to Drive (.json)</button>
@@ -634,14 +564,20 @@ function renderData(main){
     </div>
     <div class="block">
       <h3>Install as an app</h3>
-      <p>In Chrome's menu, tap "Add to Home screen" so Roadbook opens full-screen like a normal app, no Play Store needed. Works offline once installed — nothing here relies on the internet.</p>
+      <p>In Chrome's menu, tap "Add to Home screen" so Roadbook opens full-screen like a normal app, no Play Store needed. Works offline once installed — nothing here relies on the internet except syncing and Drive backup.</p>
     </div>
     <div class="block">
       <h3>Erase everything</h3>
-      <p>Clears all stops, expenses, and photos from this device. Export a backup first if you want to keep them.</p>
+      <p>Clears all stops, expenses, and photos from this device only. This does not touch your synced copy in Drive or your other device. Export a backup first if you want to keep them.</p>
       <button class="btn danger" id="wipeAll" style="width:100%">Erase all data</button>
     </div>
   </div>`;
+  if(googleConnected){
+    document.getElementById('syncNowBtn').onclick=()=>syncNow(true);
+    document.getElementById('disconnectBtn').onclick=disconnectGoogle;
+  } else {
+    document.getElementById('connectBtn').onclick=connectGoogle;
+  }
   document.getElementById('exportJson').onclick=exportJson;
   document.getElementById('exportCsv').onclick=exportCsv;
   document.getElementById('importJson').onclick=()=>document.getElementById('importInput').click();
@@ -669,8 +605,12 @@ function openEntryDetail(id){
     </div>`;
   document.getElementById('delEntry').onclick=async()=>{
     await idDelete('entries',id);
-    for(const pid of (e.photoIds||[])) await idDelete('photos',pid);
-    await loadAll(); closeSheets(); render(); toast('Stop deleted');
+    await idPut('tombstones',{id, store:'entries', deletedAt:Date.now()});
+    for(const pid of (e.photoIds||[])){
+      await idDelete('photos',pid);
+      await idPut('tombstones',{id:pid, store:'photos', deletedAt:Date.now()});
+    }
+    await loadAll(); closeSheets(); render(); toast('Stop deleted'); scheduleSync();
   };
   openSheet('sheetDetail');
 }
@@ -692,7 +632,8 @@ function openExpenseDetail(id){
     </div>`;
   document.getElementById('delExpense').onclick=async()=>{
     await idDelete('expenses',id);
-    await loadAll(); closeSheets(); render(); toast('Expense deleted');
+    await idPut('tombstones',{id, store:'expenses', deletedAt:Date.now()});
+    await loadAll(); closeSheets(); render(); toast('Expense deleted'); scheduleSync();
   };
   openSheet('sheetDetail');
 }
@@ -707,9 +648,10 @@ function openPhotoDetail(id){
     </div>`;
   document.getElementById('delPhoto').onclick=async()=>{
     await idDelete('photos',id);
+    await idPut('tombstones',{id, store:'photos', deletedAt:Date.now()});
     const owner=entries.find(e=>(e.photoIds||[]).includes(id));
     if(owner){owner.photoIds=owner.photoIds.filter(x=>x!==id); await idPut('entries',owner);}
-    await loadAll(); closeSheets(); render(); toast('Photo deleted');
+    await loadAll(); closeSheets(); render(); toast('Photo deleted'); scheduleSync();
   };
   openSheet('sheetDetail');
 }
@@ -735,10 +677,6 @@ function openLogSheet(){
   document.getElementById('logNote').value='';
   document.getElementById('logGeoReadout').textContent='';
   document.getElementById('logGeoBtn').classList.remove('got');
-  document.getElementById('logGeoBtn').textContent='📍 Use current location';
-  document.getElementById('logGeoSearch').value='';
-  document.getElementById('logGeoResults').innerHTML='';
-  document.getElementById('logGeoResults').classList.remove('open');
   document.getElementById('logThumbs').innerHTML='';
   pendingGeo.log=null; pendingPhotos=[];
   document.querySelectorAll('#typeGrid button').forEach(b=>b.classList.toggle('selected',b.dataset.type==='campsite'));
@@ -772,7 +710,7 @@ document.getElementById('logSave').addEventListener('click',async()=>{
   const entry={id:newId(), ts:Date.now(), type, note, lat:geo?geo.lat:null, lon:geo?geo.lon:null, photoIds:pendingPhotos.map(p=>p.id)};
   await idPut('entries',entry);
   for(const p of pendingPhotos) await idPut('photos',p);
-  await loadAll(); closeSheets(); activeTab='log'; setActiveTabUI(); render(); toast('Stop saved');
+  await loadAll(); closeSheets(); activeTab='log'; setActiveTabUI(); render(); toast('Stop saved'); scheduleSync();
 });
 
 function openSpendSheet(){
@@ -781,10 +719,6 @@ function openSpendSheet(){
   document.getElementById('spendNote').value='';
   document.getElementById('spendGeoReadout').textContent='';
   document.getElementById('spendGeoBtn').classList.remove('got');
-  document.getElementById('spendGeoBtn').textContent='📍 Use current location';
-  document.getElementById('spendGeoSearch').value='';
-  document.getElementById('spendGeoResults').innerHTML='';
-  document.getElementById('spendGeoResults').classList.remove('open');
   pendingGeo.spend=null;
   document.querySelectorAll('#catGrid button').forEach(b=>b.classList.toggle('selected',b.dataset.cat==='Fuel'));
   openSheet('sheetSpend');
@@ -805,7 +739,7 @@ document.getElementById('spendSave').addEventListener('click',async()=>{
   const geo=pendingGeo.spend;
   const expense={id:newId(), ts:Date.now(), category, amount, odo:odo?parseFloat(odo):null, note, lat:geo?geo.lat:null, lon:geo?geo.lon:null};
   await idPut('expenses',expense);
-  await loadAll(); closeSheets(); activeTab='spend'; setActiveTabUI(); render(); toast('Expense saved');
+  await loadAll(); closeSheets(); activeTab='spend'; setActiveTabUI(); render(); toast('Expense saved'); scheduleSync();
 });
 
 function captureGeo(which){
@@ -819,65 +753,10 @@ function captureGeo(which){
     btn.classList.add('got');
     readout.textContent=pos.coords.latitude.toFixed(5)+', '+pos.coords.longitude.toFixed(5)+' (±'+Math.round(pos.coords.accuracy)+'m)';
   },err=>{
-    btn.textContent='📍 Use current location';
+    btn.textContent='📍 Capture current location';
     readout.textContent='Couldn\'t get location — check permission, try again.';
   },{enableHighAccuracy:true, timeout:15000});
 }
-
-/* ---------- place search (geocoding via OpenStreetMap Nominatim) ---------- */
-function debounce(fn, wait){
-  let t;
-  return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), wait); };
-}
-async function searchPlace(which, query){
-  const resultsEl=document.getElementById(which+'GeoResults');
-  const q=(query||'').trim();
-  if(q.length<3){ resultsEl.innerHTML=''; resultsEl.classList.remove('open'); return; }
-  resultsEl.innerHTML='<div class="geosearch-item geosearch-status">Searching…</div>';
-  resultsEl.classList.add('open');
-  let data;
-  try{
-    const url='https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&q='+encodeURIComponent(q);
-    const res=await fetch(url,{headers:{'Accept':'application/json'}});
-    if(!res.ok) throw new Error('bad response');
-    data=await res.json();
-  }catch(err){
-    resultsEl.innerHTML='<div class="geosearch-item geosearch-status">Search unavailable — check connection</div>';
-    return;
-  }
-  if(!data.length){
-    resultsEl.innerHTML='<div class="geosearch-item geosearch-status">No matches</div>';
-    return;
-  }
-  resultsEl.innerHTML=data.map((d,i)=>`<div class="geosearch-item" data-idx="${i}">${escapeHtml(d.display_name)}</div>`).join('');
-  resultsEl.querySelectorAll('.geosearch-item[data-idx]').forEach(el=>{
-    el.addEventListener('click',()=>{
-      const d=data[parseInt(el.dataset.idx,10)];
-      selectPlace(which,d);
-    });
-  });
-}
-function selectPlace(which, place){
-  const lat=parseFloat(place.lat), lon=parseFloat(place.lon);
-  pendingGeo[which]={lat,lon};
-  const btn=document.getElementById(which+'GeoBtn');
-  const readout=document.getElementById(which+'GeoReadout');
-  btn.classList.add('got');
-  const shortName=place.display_name.split(',')[0];
-  readout.textContent=lat.toFixed(5)+', '+lon.toFixed(5)+' — '+shortName;
-  document.getElementById(which+'GeoSearch').value=shortName;
-  const resultsEl=document.getElementById(which+'GeoResults');
-  resultsEl.innerHTML=''; resultsEl.classList.remove('open');
-}
-const debouncedSearchLog=debounce(q=>searchPlace('log',q),450);
-const debouncedSearchSpend=debounce(q=>searchPlace('spend',q),450);
-document.getElementById('logGeoSearch').addEventListener('input',e=>debouncedSearchLog(e.target.value));
-document.getElementById('spendGeoSearch').addEventListener('input',e=>debouncedSearchSpend(e.target.value));
-document.addEventListener('click',e=>{
-  document.querySelectorAll('.geosearch-results.open').forEach(el=>{
-    if(!el.parentElement.contains(e.target)) el.classList.remove('open');
-  });
-});
 
 function resizeImage(file){
   return new Promise(resolve=>{
@@ -949,9 +828,208 @@ function importJson(e){
   e.target.value='';
 }
 async function wipeAll(){
-  if(!confirm('Erase all stops, expenses, and photos from this device? This cannot be undone.')) return;
-  await idClear('entries'); await idClear('expenses'); await idClear('photos');
+  if(!confirm('Erase all stops, expenses, and photos from this device? This cannot be undone. Your Drive sync copy (if connected) is not touched.')) return;
+  await idClear('entries'); await idClear('expenses'); await idClear('photos'); await idClear('tombstones');
   await loadAll(); render(); toast('All data erased');
+}
+
+/* ---------- Google Drive sync ---------- */
+const GOOGLE_CLIENT_ID='230651067833-9nm4ek3r5n6hgqjrfm3ff8ebmhpg5ue2.apps.googleusercontent.com';
+const DRIVE_SCOPE='https://www.googleapis.com/auth/drive.file';
+const SYNC_FILENAME='roadbook-sync.json';
+const DRIVE_FILES='https://www.googleapis.com/drive/v3/files';
+const DRIVE_UPLOAD='https://www.googleapis.com/upload/drive/v3/files';
+
+let tokenClient=null, accessToken=null;
+let syncFileId=localStorage.getItem('rb_syncFileId')||null;
+let googleConnected=localStorage.getItem('rb_googleConnected')==='1';
+let lastSyncAt=localStorage.getItem('rb_lastSyncAt')||null;
+let syncInFlight=false, syncQueued=false, syncDebounceTimer=null;
+
+function waitForGis(timeoutMs=6000){
+  return new Promise(resolve=>{
+    const start=Date.now();
+    (function poll(){
+      if(window.google && google.accounts && google.accounts.oauth2){ resolve(true); return; }
+      if(Date.now()-start>timeoutMs){ resolve(false); return; }
+      setTimeout(poll,150);
+    })();
+  });
+}
+function initGis(){
+  tokenClient=google.accounts.oauth2.initTokenClient({
+    client_id:GOOGLE_CLIENT_ID,
+    scope:DRIVE_SCOPE,
+    callback:''
+  });
+}
+function requestToken(interactive){
+  return new Promise((resolve,reject)=>{
+    if(!tokenClient){ reject(new Error('unavailable')); return; }
+    let settled=false;
+    const to=setTimeout(()=>{ if(!settled){settled=true; reject(new Error('timeout'));} }, interactive?60000:6000);
+    tokenClient.callback=(resp)=>{
+      if(settled) return; settled=true; clearTimeout(to);
+      if(resp && resp.error){ reject(resp); return; }
+      accessToken=resp.access_token;
+      resolve(accessToken);
+    };
+    try{
+      tokenClient.requestAccessToken({prompt: interactive?'consent':''});
+    }catch(err){ if(!settled){settled=true; clearTimeout(to); reject(err);} }
+  });
+}
+function setSyncStatus(msg){
+  const el=document.getElementById('syncStatus');
+  if(el) el.textContent=msg;
+}
+
+async function findSyncFile(){
+  if(syncFileId) return syncFileId;
+  const q=encodeURIComponent("name='"+SYNC_FILENAME+"' and trashed=false");
+  const res=await fetch(`${DRIVE_FILES}?q=${q}&spaces=drive&fields=files(id,modifiedTime)`,{
+    headers:{Authorization:'Bearer '+accessToken}
+  });
+  if(!res.ok) throw new Error('drive list failed: '+res.status);
+  const data=await res.json();
+  if(data.files && data.files.length){
+    syncFileId=data.files[0].id;
+    localStorage.setItem('rb_syncFileId', syncFileId);
+    return syncFileId;
+  }
+  return null;
+}
+async function downloadRemote(fileId){
+  if(!fileId) return null;
+  const res=await fetch(`${DRIVE_FILES}/${fileId}?alt=media`,{headers:{Authorization:'Bearer '+accessToken}});
+  if(res.status===404) return null;
+  if(!res.ok) throw new Error('drive download failed: '+res.status);
+  const text=await res.text();
+  if(!text) return null;
+  try{ return JSON.parse(text); }catch(e){ return null; }
+}
+async function uploadRemote(fileId, payload){
+  const body=JSON.stringify(payload);
+  if(fileId){
+    const res=await fetch(`${DRIVE_UPLOAD}/${fileId}?uploadType=media`,{
+      method:'PATCH',
+      headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},
+      body
+    });
+    if(!res.ok) throw new Error('drive update failed: '+res.status);
+    return fileId;
+  }
+  const boundary='rbsync'+Date.now();
+  const metadata=JSON.stringify({name:SYNC_FILENAME});
+  const multipartBody=
+    `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${metadata}\r\n`+
+    `--${boundary}\r\nContent-Type: application/json\r\n\r\n${body}\r\n`+
+    `--${boundary}--`;
+  const res=await fetch(`${DRIVE_UPLOAD}?uploadType=multipart`,{
+    method:'POST',
+    headers:{Authorization:'Bearer '+accessToken,'Content-Type':`multipart/related; boundary=${boundary}`},
+    body:multipartBody
+  });
+  if(!res.ok) throw new Error('drive create failed: '+res.status);
+  const data=await res.json();
+  syncFileId=data.id;
+  localStorage.setItem('rb_syncFileId', syncFileId);
+  return syncFileId;
+}
+
+function unionById(localArr, remoteArr){
+  const map=new Map();
+  for(const x of localArr) map.set(x.id,x);
+  for(const x of remoteArr) if(!map.has(x.id)) map.set(x.id,x);
+  return [...map.values()];
+}
+function applyTombstones(arr, tsIds){
+  return arr.filter(x=>!tsIds.has(x.id));
+}
+
+async function syncNow(interactive){
+  if(!googleConnected && !interactive) return;
+  if(syncInFlight){ syncQueued=true; return; }
+  syncInFlight=true;
+  setSyncStatus('Syncing…');
+  try{
+    if(!accessToken){
+      await requestToken(interactive);
+    }
+    let fileId;
+    try{
+      fileId=await findSyncFile();
+    }catch(err){
+      accessToken=null;
+      await requestToken(interactive);
+      fileId=await findSyncFile();
+    }
+    const remote=await downloadRemote(fileId);
+    const remoteEntries=remote?.entries||[], remoteExpenses=remote?.expenses||[], remotePhotos=remote?.photos||[], remoteTombstones=remote?.tombstones||[];
+
+    const mergedTombstones=unionById(tombstones, remoteTombstones);
+    const tsIds=new Set(mergedTombstones.map(t=>t.id));
+    const mergedEntries=applyTombstones(unionById(entries, remoteEntries), tsIds);
+    const mergedExpenses=applyTombstones(unionById(expenses, remoteExpenses), tsIds);
+    const mergedPhotos=applyTombstones(unionById(photos, remotePhotos), tsIds);
+
+    await idClear('entries'); for(const x of mergedEntries) await idPut('entries',x);
+    await idClear('expenses'); for(const x of mergedExpenses) await idPut('expenses',x);
+    await idClear('photos'); for(const x of mergedPhotos) await idPut('photos',x);
+    await idClear('tombstones'); for(const x of mergedTombstones) await idPut('tombstones',x);
+    await loadAll();
+    render();
+
+    const newFileId=await uploadRemote(fileId, {entries:mergedEntries, expenses:mergedExpenses, photos:mergedPhotos, tombstones:mergedTombstones, updatedAt:Date.now()});
+    if(!syncFileId) syncFileId=newFileId;
+
+    lastSyncAt=Date.now();
+    localStorage.setItem('rb_lastSyncAt', String(lastSyncAt));
+    googleConnected=true;
+    localStorage.setItem('rb_googleConnected','1');
+    setSyncStatus('');
+    if(activeTab==='data') renderData(document.getElementById('main'));
+  }catch(err){
+    setSyncStatus('');
+    if(interactive) toast('Sync failed — check connection or reconnect');
+    console.warn('roadbook sync error', err);
+  }finally{
+    syncInFlight=false;
+    if(syncQueued){ syncQueued=false; syncNow(false); }
+  }
+}
+function scheduleSync(){
+  if(!googleConnected) return;
+  clearTimeout(syncDebounceTimer);
+  syncDebounceTimer=setTimeout(()=>syncNow(false), 1500);
+}
+
+async function connectGoogle(){
+  if(!tokenClient){ toast('Google sign-in unavailable — check connection'); return; }
+  setSyncStatus('Connecting…');
+  try{
+    await requestToken(true);
+    googleConnected=true;
+    localStorage.setItem('rb_googleConnected','1');
+    await syncNow(true);
+    toast('Google connected');
+  }catch(err){
+    setSyncStatus('');
+    toast('Could not connect Google account');
+  }
+  if(activeTab==='data') renderData(document.getElementById('main'));
+}
+function disconnectGoogle(){
+  if(!confirm('Disconnect Google account? Your data on this device is kept — you can reconnect any time.')) return;
+  if(accessToken && window.google && google.accounts && google.accounts.oauth2 && google.accounts.oauth2.revoke){
+    google.accounts.oauth2.revoke(accessToken, ()=>{});
+  }
+  accessToken=null; googleConnected=false; syncFileId=null; lastSyncAt=null;
+  localStorage.removeItem('rb_googleConnected');
+  localStorage.removeItem('rb_syncFileId');
+  localStorage.removeItem('rb_lastSyncAt');
+  toast('Google account disconnected');
+  if(activeTab==='data') renderData(document.getElementById('main'));
 }
 
 /* ---------- tabs ---------- */
@@ -969,6 +1047,11 @@ document.querySelectorAll('nav.tabs button').forEach(b=>{
   await loadAll();
   setActiveTabUI();
   render();
+  if(await waitForGis()){
+    initGis();
+    if(googleConnected) syncNow(false);
+  }
+  window.addEventListener('online', ()=>{ if(googleConnected) scheduleSync(); });
 })();
 </script>
 </body>
