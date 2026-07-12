@@ -33,7 +33,7 @@
     color:var(--ink);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     -webkit-tap-highlight-color:transparent;
-    padding-bottom:86px;
+    padding-bottom:calc(92px + env(safe-area-inset-bottom));
   }
   @media (prefers-reduced-motion: reduce){
     *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
@@ -49,6 +49,14 @@
   }
   header.top h1{font-size:19px; font-weight:800; letter-spacing:-0.01em;}
   header.top .screenlabel{font-size:12px; color:var(--ink-soft); font-weight:600;}
+  header.top .hdrright{display:flex; align-items:center; gap:10px;}
+  .syncbtn{
+    background:var(--card); border:1.5px solid var(--line); border-radius:50%;
+    width:34px; height:34px; display:flex; align-items:center; justify-content:center;
+    font-size:16px; cursor:pointer; color:var(--terracotta-dark); padding:0;
+  }
+  .syncbtn.spinning{animation:rbspin 0.9s linear infinite;}
+  @keyframes rbspin{to{transform:rotate(360deg);}}
 
   main{padding:6px 16px 8px;}
 
@@ -271,7 +279,10 @@
 
 <header class="top">
   <h1>Roadbook</h1>
-  <span class="screenlabel" id="screenLabel">Home</span>
+  <div class="hdrright">
+    <span class="screenlabel" id="screenLabel">Home</span>
+    <button class="syncbtn" id="syncBtn" title="Sync now">🔄</button>
+  </div>
 </header>
 
 <main id="main"></main>
@@ -1127,6 +1138,19 @@ function closeSheets(){
 }
 document.getElementById('backdrop').addEventListener('click',closeSheets);
 document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',closeSheets));
+
+/* ---------- header sync button ---------- */
+document.getElementById('syncBtn').addEventListener('click', async ()=>{
+  const btn=document.getElementById('syncBtn');
+  if(btn.classList.contains('spinning')) return;
+  btn.classList.add('spinning');
+  try{
+    if(!googleConnected){ await connectGoogle(); }
+    else{ await syncNow(true); }
+  }finally{
+    btn.classList.remove('spinning');
+  }
+});
 
 /* ---------- fab ---------- */
 document.getElementById('fab').addEventListener('click',()=>{
