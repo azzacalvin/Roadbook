@@ -874,18 +874,51 @@ function buildMapsLink(stops){
 function openTripDetail(id){
   const t=trips.find(x=>x.id===id); if(!t) return;
   const mapsLink=buildMapsLink(t.stops);
+  const linkedTracks=tracks.filter(tr=>tr.tripId===id);
+  const unlinkedTracks=tracks.filter(tr=>!tr.tripId);
+  const totalTrackKm=linkedTracks.reduce((s,tr)=>s+(tr.distanceKm||0),0);
   document.getElementById('detailBody').innerHTML=`
     <h2>${escapeHtml(t.name)}</h2>
     <div class="meta" style="margin:8px 0;"><span class="badge ${t.status}">${t.status}</span> &nbsp; ${t.startDate?fmtDate(new Date(t.startDate).getTime()):''}${t.endDate?' – '+fmtDate(new Date(t.endDate).getTime()):''}</div>
     ${t.notes?`<p style="font-size:14px;">${escapeHtml(t.notes)}</p>`:''}
     <div class="sectitle" style="margin-top:14px;">Stops</div>
     ${(t.stops||[]).map((s,i)=>`<div class="stoplistitem"><span class="num">${i+1}.</span><span class="nm">${escapeHtml(s.name)}${s.lat!=null?' 📍':''}</span></div>`).join('') || '<div class="meta">No stops added</div>'}
-    ${mapsLink?`<button class="btn primary" id="openMapsBtn" style="width:100%; margin-top:10px;">Open route in Google Maps</button>`:''}
+    ${mapsLink?`<button class="btn primary" id="openMapsBtn" style="width:100%; margin-top:10px;">Open planned route in Google Maps</button>`:''}
+    <div class="sectitle" style="margin-top:14px;">Recorded routes${linkedTracks.length?' · '+totalTrackKm.toFixed(1)+' km':''}</div>
+    ${linkedTracks.length ? linkedTracks.map(tr=>`<div class="stoplistitem" data-open-track-from-trip="${tr.id}">
+      <span class="nm">${escapeHtml(tr.name)} · ${tr.distanceKm.toFixed(1)} km</span>
+      <button data-unlink-track="${tr.id}">✕</button>
+    </div>`).join('') : '<div class="meta">No recorded routes linked yet</div>'}
+    ${unlinkedTracks.length ? `<div class="field" style="margin-top:8px;"><label>Link a recorded route</label><select id="linkTrackSelect"><option value="">Choose a route…</option>${unlinkedTracks.map(tr=>`<option value="${tr.id}">${escapeHtml(tr.name)} (${tr.distanceKm.toFixed(1)} km)</option>`).join('')}</select></div>` : ''}
     <div class="actions">
       <button class="btn ghost" id="editTripBtn">Edit</button>
       <button class="btn danger" id="delTripBtn">Delete</button>
     </div>`;
   if(mapsLink) document.getElementById('openMapsBtn').onclick=()=>window.open(mapsLink,'_blank');
+  document.querySelectorAll('[data-open-track-from-trip]').forEach(el=>{
+    el.addEventListener('click',(e)=>{
+      if(e.target.closest('[data-unlink-track]')) return;
+      openTrackDetail(el.dataset.openTrackFromTrip);
+    });
+  });
+  document.querySelectorAll('[data-unlink-track]').forEach(b=>{
+    b.addEventListener('click', async (e)=>{
+      e.stopPropagation();
+      const trId=b.dataset.unlinkTrack;
+      const tr=tracks.find(x=>x.id===trId); if(!tr) return;
+      tr.tripId=null; tr.updatedAt=Date.now();
+      await idPut('tracks', tr); await loadAll(); toast('Route unlinked'); scheduleSync();
+      openTripDetail(id);
+    });
+  });
+  const linkSel=document.getElementById('linkTrackSelect');
+  if(linkSel) linkSel.onchange=async(e)=>{
+    const trId=e.target.value; if(!trId) return;
+    const tr=tracks.find(x=>x.id===trId); if(!tr) return;
+    tr.tripId=id; tr.updatedAt=Date.now();
+    await idPut('tracks', tr); await loadAll(); toast('Route linked'); scheduleSync();
+    openTripDetail(id);
+  };
   document.getElementById('editTripBtn').onclick=()=>{ closeSheets(); openTripSheet(t); };
   document.getElementById('delTripBtn').onclick=async()=>{
     if(!confirm('Delete this trip?')) return;
@@ -1042,11 +1075,25 @@ function openTrackDetail(id){
     <h2>${escapeHtml(t.name)}</h2>
     <div class="meta" style="margin:8px 0;">${fmtDate(t.startTs)} · ${t.distanceKm.toFixed(1)} km · ${Math.max(1,Math.round((t.endTs-t.startTs)/60000))} min</div>
     ${mapsLink?`<button class="btn primary" id="openTrackMapsBtn" style="width:100%; margin-top:6px;">Open route in Google Maps</button>`:''}
+    <div class="field" style="margin-top:12px;">
+      <label>Linked trip</label>
+      <select id="trackTripSelect">
+        <option value="">No trip</option>
+        ${trips.map(tr=>`<option value="${tr.id}" ${t.tripId===tr.id?'selected':''}>${escapeHtml(tr.name)}</option>`).join('')}
+      </select>
+    </div>
     <div class="actions">
       <button class="btn ghost" data-close>Close</button>
       <button class="btn danger" id="delTrack">Delete</button>
     </div>`;
   if(mapsLink) document.getElementById('openTrackMapsBtn').onclick=()=>window.open(mapsLink,'_blank');
+  document.getElementById('trackTripSelect').onchange=async(e)=>{
+    t.tripId = e.target.value || null;
+    t.updatedAt=Date.now();
+    await idPut('tracks', t);
+    await loadAll(); toast(t.tripId?'Linked to trip':'Unlinked'); scheduleSync();
+    openTrackDetail(id);
+  };
   document.getElementById('delTrack').onclick=async()=>{
     await idDelete('tracks', id);
     await idPut('tombstones',{id, store:'tracks', deletedAt:Date.now()});
@@ -1215,7 +1262,7 @@ async function stopRecording(){
   if(pts.length<2){ toast('Not enough GPS points captured'); if(activeTab==='log') render(); return; }
   let dist=0; for(let i=1;i<pts.length;i++) dist+=haversine(pts[i-1].lat,pts[i-1].lon,pts[i].lat,pts[i].lon);
   const name=prompt('Name this route (optional):','') || ('Route '+fmtDate(recordStartTs));
-  const track={id:newId(), name, startTs:recordStartTs, endTs:Date.now(), points:pts, distanceKm:dist, updatedAt:Date.now()};
+  const track={id:newId(), name, startTs:recordStartTs, endTs:Date.now(), points:pts, distanceKm:dist, tripId:null, updatedAt:Date.now()};
   await idPut('tracks', track);
   await loadAll();
   if(activeTab==='log') render();
