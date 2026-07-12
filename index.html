@@ -566,12 +566,23 @@ function renderHome(main){
 
   const upcoming = trips.filter(t=>t.status==='planning'||t.status==='active').slice(0,3);
 
+  const recBarHtml = recording ? `
+    <div class="recbar live">
+      <div><div style="font-size:11px; opacity:0.85; text-transform:uppercase; letter-spacing:0.05em; font-weight:800;">Recording route</div><div class="readout" id="recordReadout">0:00 · 0.0 km</div></div>
+      <button class="btn ghost" id="recStopBtn" style="flex:0 0 auto; background:rgba(255,255,255,0.15); border-color:rgba(255,255,255,0.6); color:#fff;">Stop</button>
+    </div>` : `
+    <div class="recbar">
+      <div><div style="font-size:11px; text-transform:uppercase; letter-spacing:0.05em; font-weight:800; color:var(--ink-soft);">Trip recorder</div><div style="font-size:12px; color:var(--ink-soft);">Track your route while driving</div></div>
+      <button class="btn primary" id="recStartBtn" style="flex:0 0 auto;">Start</button>
+    </div>`;
+
   main.innerHTML=`
     <div class="greetcard">
       <div class="eyebrow">Welcome back</div>
       <h2>${escapeHtml(rigName)}</h2>
       <div class="sub">${plannedCount} trip${plannedCount===1?'':'s'} planned</div>
     </div>
+    ${recBarHtml}
     <div class="statrow">
       <div class="statchip"><div class="val">${entries.length}</div><div class="lbl">Stops</div></div>
       <div class="statchip"><div class="val">${Math.round(km)}</div><div class="lbl">Km logged</div></div>
@@ -597,6 +608,12 @@ function renderHome(main){
     <div class="sectitle">Tip of the day</div>
     <div class="tipcard"><div class="lbl">Good to know</div>${escapeHtml(tipOfDay())}</div>
   `;
+  if(recording){
+    document.getElementById('recStopBtn').onclick=stopRecording;
+    updateRecordingReadout();
+  } else {
+    document.getElementById('recStartBtn').onclick=startRecording;
+  }
   document.getElementById('tileLog').onclick=()=>{ activeTab='log'; setActiveTabUI(); render(); openLogSheet(); };
   document.getElementById('tileSpend').onclick=()=>{ activeTab='more'; moreView='spend'; setActiveTabUI(); render(); openSpendSheet(); };
   document.getElementById('tileTrip').onclick=()=>{ activeTab='trips'; setActiveTabUI(); render(); openTripSheet(); };
@@ -1280,7 +1297,7 @@ function startRecording(){
     updateRecordingReadout();
   }, err=>{ toast('Location error — check permission'); }, {enableHighAccuracy:true, maximumAge:5000, timeout:20000});
   recordTimerInterval=setInterval(updateRecordingReadout,1000);
-  if(activeTab==='log') render();
+  if(activeTab==='log'||activeTab==='home') render();
   toast('Recording started — keep the app open while driving');
 }
 async function stopRecording(){
@@ -1288,13 +1305,13 @@ async function stopRecording(){
   clearInterval(recordTimerInterval);
   recording=false;
   const pts=recordPoints; recordPoints=[];
-  if(pts.length<2){ toast('Not enough GPS points captured'); if(activeTab==='log') render(); return; }
+  if(pts.length<2){ toast('Not enough GPS points captured'); if(activeTab==='log'||activeTab==='home') render(); return; }
   let dist=0; for(let i=1;i<pts.length;i++) dist+=haversine(pts[i-1].lat,pts[i-1].lon,pts[i].lat,pts[i].lon);
   const name=prompt('Name this route (optional):','') || ('Route '+fmtDate(recordStartTs));
   const track={id:newId(), name, startTs:recordStartTs, endTs:Date.now(), points:pts, distanceKm:dist, tripId:null, updatedAt:Date.now()};
   await idPut('tracks', track);
   await loadAll();
-  if(activeTab==='log') render();
+  if(activeTab==='log'||activeTab==='home') render();
   toast('Route saved'); scheduleSync();
 }
 function updateRecordingReadout(){
