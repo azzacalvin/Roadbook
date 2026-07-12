@@ -809,6 +809,10 @@ function vehField(kind, key, label, type, opts){
 }
 function renderVan(main){
   main.innerHTML = `
+    <div class="sectitle">Your details</div>
+    <div class="card vehform" id="ownerForm">
+      ${vehField('owner','name','Your name','text')}
+    </div>
     <div class="sectitle">Tow vehicle</div>
     <div class="card vehform" id="carForm">
       ${vehField('car','nickname','Nickname','text')}
