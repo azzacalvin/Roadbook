@@ -496,7 +496,8 @@ function newId(){return Date.now().toString(36)+Math.random().toString(36).slice
 /* ---------- state ---------- */
 let entries=[], expenses=[], photos=[], tombstones=[], vehicles=[], trips=[], tracks=[];
 let activeTab='home';
-let moreView=null; // null | 'spend' | 'photos' | 'assistant' | 'backup'
+let moreView=null; // null | 'spend' | 'photos' | 'assistant' | 'backup' | 'travel'
+let allTravelMode='timeline'; // 'timeline' | 'bytrip'
 let pendingGeo={log:null, spend:null, tripstop:null};
 let pendingPhotos=[];
 let pendingTripStops=[];
@@ -818,14 +819,105 @@ function wireBackRow(main){
   if(el) el.addEventListener('click',()=>{ moreView=null; setActiveTabUI(); render(); });
 }
 
+/* ---------- ALL TRAVEL (combined view) ---------- */
+function travelEntryRow(e){
+  const loc = e.lat!=null ? `${e.lat.toFixed(4)}, ${e.lon.toFixed(4)}` : 'No location';
+  const photoCount = (e.photoIds||[]).length;
+  return `<div class="row" data-open-entry="${e.id}">
+    <div class="tag ${e.type}"></div>
+    <div class="body">
+      <div class="rowtop">
+        <span class="kind ${e.type}">${typeLabel(e.type)}</span>
+        <span class="date">${fmtDate(e.ts)} ${fmtTime(e.ts)}</span>
+      </div>
+      <div class="note">${escapeHtml(e.note||'(no note)')}</div>
+      <div class="meta">${loc}${photoCount?' · '+photoCount+' photo'+(photoCount>1?'s':''):''}</div>
+    </div>
+  </div>`;
+}
+function travelTrackRow(t){
+  return `<div class="row" data-open-track="${t.id}">
+    <div class="tag" style="background:var(--terracotta)"></div>
+    <div class="body">
+      <div class="rowtop"><span class="kind" style="color:var(--terracotta-dark)">${escapeHtml(t.name)}${t.externalLink?' (link)':''}</span><span class="date">${fmtDate(t.startTs)}</span></div>
+      <div class="meta">${t.distanceKm!=null ? t.distanceKm.toFixed(1)+' km · '+Math.max(1,Math.round((t.endTs-t.startTs)/60000))+' min' : (t.externalLink?'Linked route':'')}</div>
+    </div>
+  </div>`;
+}
+function renderTravelTimeline(){
+  const items = [
+    ...entries.map(e=>({ts:e.ts, html:travelEntryRow(e)})),
+    ...tracks.map(t=>({ts:t.startTs, html:travelTrackRow(t)}))
+  ].sort((a,b)=>b.ts-a.ts);
+  if(!items.length) return '<div class="empty"><span class="t">Nothing logged yet</span>Stops and routes you add will show up here.</div>';
+  return items.map(i=>i.html).join('');
+}
+function renderTravelByTrip(){
+  const sortedTrips = trips.slice().sort((a,b)=>(a.startDate||'').localeCompare(b.startDate||''));
+  const usedTrackIds = new Set();
+  const usedEntryIds = new Set();
+  let html = '';
+  sortedTrips.forEach(t=>{
+    const tTracks = tracks.filter(tr=>tr.tripId===t.id);
+    tTracks.forEach(tr=>usedTrackIds.add(tr.id));
+    let tEntries = [];
+    if(t.startDate && t.endDate){
+      const startTs = new Date(t.startDate+'T00:00:00').getTime();
+      const endTs = new Date(t.endDate+'T23:59:59').getTime();
+      tEntries = entries.filter(e=>e.ts>=startTs && e.ts<=endTs);
+      tEntries.forEach(e=>usedEntryIds.add(e.id));
+    }
+    html += `<div class="sectitle" style="margin-top:14px; cursor:pointer;" data-open-trip-travel="${t.id}">${escapeHtml(t.name)} <span class="badge ${t.status}" style="margin-left:6px;">${t.status}</span></div>`;
+    if(!tTracks.length && !tEntries.length){
+      html += '<div class="meta" style="margin-bottom:8px;">Nothing logged for this trip yet</div>';
+    } else {
+      html += tTracks.map(travelTrackRow).join('') + tEntries.map(travelEntryRow).join('');
+    }
+  });
+  const unassignedTracks = tracks.filter(tr=>!usedTrackIds.has(tr.id));
+  const unassignedEntries = entries.filter(e=>!usedEntryIds.has(e.id));
+  if(unassignedTracks.length || unassignedEntries.length){
+    html += `<div class="sectitle" style="margin-top:14px;">Unassigned</div>`;
+    html += unassignedTracks.map(travelTrackRow).join('') + unassignedEntries.map(travelEntryRow).join('');
+  }
+  if(!html) html = '<div class="empty"><span class="t">Nothing logged yet</span>Plan a trip and start logging to see it here.</div>';
+  return html;
+}
+function wireTravelRowClicks(main){
+  main.querySelectorAll('[data-open-entry]').forEach(el=>{
+    el.addEventListener('click',()=>openEntryDetail(el.dataset.openEntry));
+  });
+  main.querySelectorAll('[data-open-track]').forEach(el=>{
+    el.addEventListener('click',()=>openTrackDetail(el.dataset.openTrack));
+  });
+  main.querySelectorAll('[data-open-trip-travel]').forEach(el=>{
+    el.addEventListener('click',()=>{ activeTab='trips'; setActiveTabUI(); render(); openTripDetail(el.dataset.openTripTravel); });
+  });
+}
+function renderAllTravel(main){
+  const toggle = `<div class="typegrid" style="grid-template-columns:repeat(2,1fr); margin-bottom:14px;" id="travelModeGrid">
+    <button data-mode="timeline" class="${allTravelMode==='timeline'?'selected':''}">Timeline</button>
+    <button data-mode="bytrip" class="${allTravelMode==='bytrip'?'selected':''}">By Trip</button>
+  </div>`;
+  const body = allTravelMode==='timeline' ? renderTravelTimeline() : renderTravelByTrip();
+  main.innerHTML = backRow('More') + '<div class="sectitle">All Travel</div>' + toggle + body;
+  wireBackRow(main);
+  main.querySelectorAll('#travelModeGrid button').forEach(b=>{
+    b.addEventListener('click',()=>{ allTravelMode=b.dataset.mode; renderAllTravel(main); });
+  });
+  wireTravelRowClicks(main);
+}
+
 /* ---------- MORE (menu) ---------- */
 function renderMore(main){
   if(moreView==='spend') return renderSpend(main);
   if(moreView==='photos') return renderPhotos(main);
   if(moreView==='assistant') return renderAssistant(main);
   if(moreView==='backup') return renderBackup(main);
+  if(moreView==='travel') return renderAllTravel(main);
   main.innerHTML = `
     <div class="sectitle">More</div>
+    <div class="menurow" data-view="travel"><div class="left"><span class="ic">🧭</span><span class="label">All Travel</span></div><span class="chev">›</span></div>
     <div class="menurow" data-view="spend"><div class="left"><span class="ic">💵</span><span class="label">Spend</span></div><span class="chev">›</span></div>
     <div class="menurow" data-view="photos"><div class="left"><span class="ic">📷</span><span class="label">Photos</span></div><span class="chev">›</span></div>
     <div class="menurow" data-view="assistant"><div class="left"><span class="ic">💬</span><span class="label">Assistant</span></div><span class="chev">›</span></div>
@@ -1130,6 +1222,18 @@ function openPhotoDetail(id){
   };
   openSheet('sheetDetail');
 }
+function parseGoogleMapsCoords(url){
+  if(!url) return null;
+  let m = url.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+  if(m) return {lat:parseFloat(m[1]), lon:parseFloat(m[2])};
+  m = url.match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/);
+  if(m) return {lat:parseFloat(m[1]), lon:parseFloat(m[2])};
+  m = url.match(/destination=(-?\d+\.\d+),(-?\d+\.\d+)/);
+  if(m) return {lat:parseFloat(m[1]), lon:parseFloat(m[2])};
+  m = url.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/);
+  if(m) return {lat:parseFloat(m[1]), lon:parseFloat(m[2])};
+  return null;
+}
 function openTrackDetail(id){
   const t=tracks.find(x=>x.id===id); if(!t) return;
   const mapsLink=buildTrackMapsLink(t.points);
@@ -1140,6 +1244,7 @@ function openTrackDetail(id){
     <h2>${escapeHtml(t.name)}</h2>
     <div class="meta" style="margin:8px 0;">${metaLine}</div>
     ${t.notes?`<p style="font-size:14px;">${escapeHtml(t.notes)}</p>`:''}
+    ${t.linkLat!=null ? `<iframe src="https://www.google.com/maps?q=${t.linkLat},${t.linkLon}&z=12&output=embed" style="width:100%; height:160px; border:0; border-radius:12px; margin-top:8px;" loading="lazy"></iframe>` : ''}
     ${mapsLink?`<button class="btn primary" id="openTrackMapsBtn" style="width:100%; margin-top:6px;">Open route in Google Maps</button>`:''}
     ${t.externalLink?`<button class="btn primary" id="openTrackLinkBtn" style="width:100%; margin-top:6px;">Open linked route</button>`:''}
     <div class="field" style="margin-top:12px;">
@@ -1200,7 +1305,8 @@ document.getElementById('linkRouteSave').addEventListener('click', async()=>{
   const dateVal=document.getElementById('linkRouteDate').value;
   const ts = dateVal ? new Date(dateVal+'T12:00:00').getTime() : Date.now();
   const notes=document.getElementById('linkRouteNotes').value.trim();
-  const track={id:newId(), name, startTs:ts, endTs:ts, points:[], distanceKm:null, externalLink:url||null, notes:notes||null, tripId:null, updatedAt:Date.now()};
+  const coords=parseGoogleMapsCoords(url);
+  const track={id:newId(), name, startTs:ts, endTs:ts, points:[], distanceKm:null, externalLink:url||null, notes:notes||null, linkLat: coords?coords.lat:null, linkLon: coords?coords.lon:null, tripId:null, updatedAt:Date.now()};
   await idPut('tracks', track);
   await loadAll(); closeSheets(); activeTab='log'; setActiveTabUI(); render(); toast('Past trip linked'); scheduleSync();
 });
