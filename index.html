@@ -414,6 +414,32 @@
   </div>
 </div>
 
+<!-- Link a past (unrecorded) trip sheet -->
+<div class="sheet" id="sheetLinkRoute">
+  <button class="closebtn" data-close>✕</button>
+  <h2>Link a past trip</h2>
+  <div class="field">
+    <label>Route name</label>
+    <input type="text" id="linkRouteName" placeholder="e.g. Gulf loop 2023">
+  </div>
+  <div class="field">
+    <label>Date</label>
+    <input type="date" id="linkRouteDate">
+  </div>
+  <div class="field">
+    <label>Link</label>
+    <input type="text" id="linkRouteUrl" placeholder="Google Maps, Strava, photo album...">
+  </div>
+  <div class="field">
+    <label>Notes</label>
+    <input type="text" id="linkRouteNotes" placeholder="optional">
+  </div>
+  <div class="actions">
+    <button class="btn ghost" data-close>Cancel</button>
+    <button class="btn primary" id="linkRouteSave">Save</button>
+  </div>
+</div>
+
 <!-- Detail / view sheet -->
 <div class="sheet" id="sheetDetail">
   <button class="closebtn" data-close>✕</button>
@@ -635,6 +661,8 @@ function renderLog(main){
       <button class="btn primary" id="recStartBtn" style="flex:0 0 auto;">Start</button>
     </div>`;
 
+  const linkRouteRow = `<button class="btn ghost" id="linkPastTripBtn" style="width:100%; margin-bottom:12px;">Link a past trip that was not recorded</button>`;
+
   const list = !entries.length ? '<div class="empty"><span class="t">No stops yet</span>Tap + to log a campsite, fuel stop, or note.</div>' :
     entries.map(e=>{
       const loc = e.lat!=null ? `${e.lat.toFixed(4)}, ${e.lon.toFixed(4)}` : 'No location';
@@ -657,13 +685,13 @@ function renderLog(main){
     ${tracks.map(t=>`<div class="row" data-open-track="${t.id}">
       <div class="tag" style="background:var(--terracotta)"></div>
       <div class="body">
-        <div class="rowtop"><span class="kind" style="color:var(--terracotta-dark)">${escapeHtml(t.name)}</span><span class="date">${fmtDate(t.startTs)}</span></div>
-        <div class="meta">${t.distanceKm.toFixed(1)} km · ${Math.max(1,Math.round((t.endTs-t.startTs)/60000))} min</div>
+        <div class="rowtop"><span class="kind" style="color:var(--terracotta-dark)">${escapeHtml(t.name)}${t.externalLink?' (link)':''}</span><span class="date">${fmtDate(t.startTs)}</span></div>
+        <div class="meta">${t.distanceKm!=null ? t.distanceKm.toFixed(1)+' km · '+Math.max(1,Math.round((t.endTs-t.startTs)/60000))+' min' : (t.externalLink?'Linked route':'')}</div>
       </div>
     </div>`).join('')}
   ` : '';
 
-  main.innerHTML = recBar + '<div class="sectitle">Stops</div>' + list + tracksHtml;
+  main.innerHTML = recBar + linkRouteRow + '<div class="sectitle">Stops</div>' + list + tracksHtml;
 
   if(recording){
     document.getElementById('recStopBtn').onclick=stopRecording;
@@ -671,6 +699,7 @@ function renderLog(main){
   } else {
     document.getElementById('recStartBtn').onclick=startRecording;
   }
+  document.getElementById('linkPastTripBtn').onclick=openLinkRouteSheet;
   main.querySelectorAll('[data-open-entry]').forEach(el=>{
     el.addEventListener('click',()=>openEntryDetail(el.dataset.openEntry));
   });
@@ -919,10 +948,10 @@ function openTripDetail(id){
     ${mapsLink?`<button class="btn primary" id="openMapsBtn" style="width:100%; margin-top:10px;">Open planned route in Google Maps</button>`:''}
     <div class="sectitle" style="margin-top:14px;">Recorded routes${linkedTracks.length?' · '+totalTrackKm.toFixed(1)+' km':''}</div>
     ${linkedTracks.length ? linkedTracks.map(tr=>`<div class="stoplistitem" data-open-track-from-trip="${tr.id}">
-      <span class="nm">${escapeHtml(tr.name)} · ${tr.distanceKm.toFixed(1)} km</span>
+      <span class="nm">${escapeHtml(tr.name)}${tr.distanceKm!=null?' · '+tr.distanceKm.toFixed(1)+' km':(tr.externalLink?' (link)':'')}</span>
       <button data-unlink-track="${tr.id}">✕</button>
     </div>`).join('') : '<div class="meta">No recorded routes linked yet</div>'}
-    ${unlinkedTracks.length ? `<div class="field" style="margin-top:8px;"><label>Link a recorded route</label><select id="linkTrackSelect"><option value="">Choose a route…</option>${unlinkedTracks.map(tr=>`<option value="${tr.id}">${escapeHtml(tr.name)} (${tr.distanceKm.toFixed(1)} km)</option>`).join('')}</select></div>` : ''}
+    ${unlinkedTracks.length ? `<div class="field" style="margin-top:8px;"><label>Link a recorded route</label><select id="linkTrackSelect"><option value="">Choose a route…</option>${unlinkedTracks.map(tr=>`<option value="${tr.id}">${escapeHtml(tr.name)}${tr.distanceKm!=null?' ('+tr.distanceKm.toFixed(1)+' km)':''}</option>`).join('')}</select></div>` : ''}
     <div class="actions">
       <button class="btn ghost" id="editTripBtn">Edit</button>
       <button class="btn danger" id="delTripBtn">Delete</button>
@@ -1104,10 +1133,15 @@ function openPhotoDetail(id){
 function openTrackDetail(id){
   const t=tracks.find(x=>x.id===id); if(!t) return;
   const mapsLink=buildTrackMapsLink(t.points);
+  const metaLine = t.distanceKm!=null
+    ? `${fmtDate(t.startTs)} · ${t.distanceKm.toFixed(1)} km · ${Math.max(1,Math.round((t.endTs-t.startTs)/60000))} min`
+    : fmtDate(t.startTs);
   document.getElementById('detailBody').innerHTML=`
     <h2>${escapeHtml(t.name)}</h2>
-    <div class="meta" style="margin:8px 0;">${fmtDate(t.startTs)} · ${t.distanceKm.toFixed(1)} km · ${Math.max(1,Math.round((t.endTs-t.startTs)/60000))} min</div>
+    <div class="meta" style="margin:8px 0;">${metaLine}</div>
+    ${t.notes?`<p style="font-size:14px;">${escapeHtml(t.notes)}</p>`:''}
     ${mapsLink?`<button class="btn primary" id="openTrackMapsBtn" style="width:100%; margin-top:6px;">Open route in Google Maps</button>`:''}
+    ${t.externalLink?`<button class="btn primary" id="openTrackLinkBtn" style="width:100%; margin-top:6px;">Open linked route</button>`:''}
     <div class="field" style="margin-top:12px;">
       <label>Linked trip</label>
       <select id="trackTripSelect">
@@ -1120,6 +1154,7 @@ function openTrackDetail(id){
       <button class="btn danger" id="delTrack">Delete</button>
     </div>`;
   if(mapsLink) document.getElementById('openTrackMapsBtn').onclick=()=>window.open(mapsLink,'_blank');
+  if(t.externalLink) document.getElementById('openTrackLinkBtn').onclick=()=>window.open(t.externalLink,'_blank');
   document.getElementById('trackTripSelect').onchange=async(e)=>{
     t.tripId = e.target.value || null;
     t.updatedAt=Date.now();
@@ -1148,6 +1183,27 @@ function buildTrackMapsLink(points){
   const waypoints=sampled.slice(0,-1).map(toParam).join('|');
   return `https://www.google.com/maps/dir/?api=1&destination=${destination}&waypoints=${waypoints}&travelmode=driving`;
 }
+
+/* ---------- link a past (unrecorded) trip ---------- */
+function openLinkRouteSheet(){
+  document.getElementById('linkRouteName').value='';
+  document.getElementById('linkRouteDate').value='';
+  document.getElementById('linkRouteUrl').value='';
+  document.getElementById('linkRouteNotes').value='';
+  openSheet('sheetLinkRoute');
+}
+document.getElementById('linkRouteSave').addEventListener('click', async()=>{
+  const name=document.getElementById('linkRouteName').value.trim();
+  if(!name){ toast('Enter a route name'); return; }
+  let url=document.getElementById('linkRouteUrl').value.trim();
+  if(url && !/^https?:\/\//i.test(url)) url='https://'+url;
+  const dateVal=document.getElementById('linkRouteDate').value;
+  const ts = dateVal ? new Date(dateVal+'T12:00:00').getTime() : Date.now();
+  const notes=document.getElementById('linkRouteNotes').value.trim();
+  const track={id:newId(), name, startTs:ts, endTs:ts, points:[], distanceKm:null, externalLink:url||null, notes:notes||null, tripId:null, updatedAt:Date.now()};
+  await idPut('tracks', track);
+  await loadAll(); closeSheets(); activeTab='log'; setActiveTabUI(); render(); toast('Past trip linked'); scheduleSync();
+});
 
 /* ---------- sheets open/close ---------- */
 function openSheet(id){
