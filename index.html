@@ -8,197 +8,170 @@
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   :root{
-    --paper:#E9E3D0;
-    --paper-dark:#DCD3B8;
-    --paper-darker:#CFC5A4;
-    --ink:#2B2A25;
-    --ink-soft:#5B584C;
-    --highway:#29506B;
-    --highway-ink:#EAF0F4;
-    --rust:#B5502A;
-    --eucalypt:#5F7A45;
-    --ochre:#C98A2C;
-    --line:#B7AE92;
-    --danger:#9E3B2E;
-    --radius:2px;
+    --sand:#F4E9D8;
+    --sand-dark:#EADBC2;
+    --sand-darker:#DFC9A5;
+    --card:#FFFBF3;
+    --ink:#3A2A1E;
+    --ink-soft:#8A7660;
+    --terracotta:#C1603C;
+    --terracotta-dark:#A94E2E;
+    --terracotta-ink:#FFF6EF;
+    --rust:#A8452A;
+    --ochre:#D69A34;
+    --eucalypt:#6B8552;
+    --line:#E3D2B4;
+    --danger:#A8452A;
+    --radius:14px;
+    --radius-sm:9px;
   }
   *{box-sizing:border-box;}
   html,body{height:100%;}
   body{
     margin:0;
-    background:var(--paper);
-    background-image:
-      linear-gradient(var(--line) 1px, transparent 1px),
-      linear-gradient(90deg, var(--line) 1px, transparent 1px);
-    background-size:28px 28px;
-    background-attachment:fixed;
+    background:var(--sand);
     color:var(--ink);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     -webkit-tap-highlight-color:transparent;
-    padding-bottom:84px;
+    padding-bottom:86px;
   }
   @media (prefers-reduced-motion: reduce){
     *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
   }
-  :focus-visible{outline:2px solid var(--highway); outline-offset:2px;}
-
+  :focus-visible{outline:2px solid var(--terracotta); outline-offset:2px;}
   h1,h2,h3{margin:0;}
-  .display{
-    font-family:"Courier New",ui-monospace,monospace;
-    text-transform:uppercase;
-    letter-spacing:0.14em;
-    font-weight:700;
-  }
 
   header.top{
     position:sticky; top:0; z-index:20;
-    background:var(--paper);
-    border-bottom:2px solid var(--ink);
-    padding:14px 16px 10px;
+    background:var(--sand);
+    padding:16px 16px 10px;
+    display:flex; align-items:center; justify-content:space-between;
   }
-  header.top .titlerow{
-    display:flex; align-items:baseline; justify-content:space-between;
-  }
-  header.top .titlerow h1{
-    font-size:20px;
-  }
-  header.top .titlerow .sub{
-    font-size:10px; letter-spacing:0.12em; color:var(--ink-soft); text-transform:uppercase;
-  }
+  header.top h1{font-size:19px; font-weight:800; letter-spacing:-0.01em;}
+  header.top .screenlabel{font-size:12px; color:var(--ink-soft); font-weight:600;}
 
-  .odometer{
-    margin-top:12px;
-    display:grid;
-    grid-template-columns:repeat(4,1fr);
-    gap:1px;
-    background:var(--ink);
-    border:1px solid var(--ink);
-  }
-  .odometer .cell{
-    background:var(--paper-dark);
-    padding:8px 4px 7px;
-    text-align:center;
-  }
-  .odometer .cell .val{
-    font-family:ui-monospace,"Courier New",monospace;
-    font-variant-numeric:tabular-nums;
-    font-size:18px;
-    font-weight:700;
-    letter-spacing:0.02em;
-  }
-  .odometer .cell .lbl{
-    margin-top:2px;
-    font-size:8.5px;
-    letter-spacing:0.1em;
-    text-transform:uppercase;
-    color:var(--ink-soft);
-  }
+  main{padding:6px 16px 8px;}
 
-  nav.tabs{
-    display:flex;
-    border-bottom:1px solid var(--ink);
-    margin-top:12px;
-    gap:0;
+  .card{
+    background:var(--card);
+    border-radius:var(--radius);
+    padding:16px;
+    margin-bottom:12px;
+    box-shadow:0 1px 2px rgba(58,42,30,0.08);
   }
-  nav.tabs button{
-    flex:1;
-    background:none;
-    border:none;
-    border-bottom:3px solid transparent;
-    padding:9px 2px 8px;
-    font-size:10.5px;
-    letter-spacing:0.1em;
-    text-transform:uppercase;
-    font-weight:700;
-    color:var(--ink-soft);
-    cursor:pointer;
-    font-family:inherit;
+  .greetcard{
+    background:linear-gradient(135deg, var(--terracotta), var(--ochre));
+    color:var(--terracotta-ink);
+    border-radius:var(--radius);
+    padding:18px;
+    margin-bottom:14px;
   }
-  nav.tabs button.active{
-    color:var(--ink);
-    border-bottom-color:var(--highway);
-  }
+  .greetcard .eyebrow{font-size:11px; opacity:0.85; font-weight:600; letter-spacing:0.02em;}
+  .greetcard h2{font-size:20px; margin-top:2px;}
+  .greetcard .sub{font-size:12.5px; opacity:0.9; margin-top:2px;}
 
-  main{padding:14px 16px 8px;}
+  .statrow{display:flex; gap:8px; margin-bottom:14px;}
+  .statchip{
+    flex:1; background:var(--card); border-radius:var(--radius-sm); padding:9px 6px; text-align:center;
+    box-shadow:0 1px 2px rgba(58,42,30,0.06);
+  }
+  .statchip .val{font-size:16px; font-weight:800;}
+  .statchip .lbl{font-size:9.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:0.06em; margin-top:1px;}
+
+  .sectitle{font-size:13px; font-weight:800; margin:6px 2px 8px; color:var(--ink);}
+
+  .tilegrid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;}
+  .tile{
+    background:var(--card); border-radius:var(--radius); padding:14px 12px; cursor:pointer;
+    box-shadow:0 1px 2px rgba(58,42,30,0.08); text-align:left;
+  }
+  .tile .icon{font-size:20px;}
+  .tile .label{font-size:12.5px; font-weight:700; margin-top:6px;}
+  .tile .desc{font-size:10.5px; color:var(--ink-soft); margin-top:1px;}
+
+  .tipcard{
+    background:var(--sand-dark); border-radius:var(--radius); padding:14px; font-size:12.5px; color:var(--ink);
+    margin-bottom:14px;
+  }
+  .tipcard .lbl{font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; color:var(--terracotta-dark); margin-bottom:4px;}
+
   .empty{
-    padding:36px 12px;
-    text-align:center;
-    color:var(--ink-soft);
-    font-size:13px;
-    border:1px dashed var(--line);
+    padding:34px 12px; text-align:center; color:var(--ink-soft); font-size:13px;
+    border:1.5px dashed var(--line); border-radius:var(--radius);
   }
-  .empty .display{display:block; font-size:13px; margin-bottom:6px; color:var(--ink);}
+  .empty .t{display:block; font-size:14px; font-weight:800; margin-bottom:6px; color:var(--ink);}
 
-  .ledger{border-top:1px solid var(--ink);}
   .row{
-    display:flex;
-    gap:10px;
-    padding:11px 2px;
-    border-bottom:1px solid var(--line);
-    cursor:pointer;
+    display:flex; gap:10px; padding:12px; margin-bottom:8px; cursor:pointer;
+    background:var(--card); border-radius:var(--radius-sm); box-shadow:0 1px 2px rgba(58,42,30,0.06);
   }
-  .row:active{background:var(--paper-dark);}
-  .row .tag{
-    flex:0 0 5px;
-    border-radius:1px;
-  }
+  .row:active{background:var(--sand-dark);}
+  .row .tag{flex:0 0 5px; border-radius:3px;}
   .row .body{flex:1; min-width:0;}
   .row .rowtop{display:flex; justify-content:space-between; gap:8px; align-items:baseline;}
-  .row .kind{
-    font-size:9.5px; letter-spacing:0.1em; text-transform:uppercase; font-weight:700;
-  }
+  .row .kind{font-size:9.5px; letter-spacing:0.08em; text-transform:uppercase; font-weight:800;}
   .row .date{font-size:10px; color:var(--ink-soft); font-family:ui-monospace,monospace;}
-  .row .note{font-size:14px; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-  .row .meta{font-size:10.5px; color:var(--ink-soft); margin-top:2px; font-family:ui-monospace,monospace;}
-  .row .amount{
-    font-family:ui-monospace,monospace; font-weight:700; font-size:14px; white-space:nowrap;
-  }
+  .row .note{font-size:13.5px; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .row .meta{font-size:10.5px; color:var(--ink-soft); margin-top:2px;}
+  .row .amount{font-family:ui-monospace,monospace; font-weight:800; font-size:14px; white-space:nowrap;}
 
   .tag.campsite{background:var(--eucalypt);}
   .tag.fuel{background:var(--rust);}
-  .tag.poi{background:var(--highway);}
-  .tag.note{background:var(--ochre);}
+  .tag.poi{background:var(--ochre);}
+  .tag.note{background:var(--ink-soft);}
   .kind.campsite{color:var(--eucalypt);}
   .kind.fuel{color:var(--rust);}
-  .kind.poi{color:var(--highway);}
-  .kind.note{color:var(--ochre);}
+  .kind.poi{color:var(--ochre);}
+  .kind.note{color:var(--ink-soft);}
 
-  .photogrid{
-    display:grid; grid-template-columns:repeat(3,1fr); gap:3px;
-  }
+  .photogrid{display:grid; grid-template-columns:repeat(3,1fr); gap:5px;}
   .photogrid .thumb{
-    aspect-ratio:1; overflow:hidden; background:var(--paper-dark); border:1px solid var(--line);
+    aspect-ratio:1; overflow:hidden; background:var(--sand-dark); border-radius:var(--radius-sm);
     position:relative; cursor:pointer;
   }
   .photogrid img{width:100%; height:100%; object-fit:cover; display:block;}
 
   .fab{
-    position:fixed; right:18px; bottom:22px; z-index:25;
+    position:fixed; right:18px; bottom:78px; z-index:25;
     width:56px; height:56px; border-radius:50%;
-    background:var(--highway); color:var(--highway-ink);
+    background:var(--terracotta); color:var(--terracotta-ink);
     border:none; font-size:26px; font-weight:400;
-    box-shadow:0 2px 6px rgba(0,0,0,0.35);
-    cursor:pointer;
-    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 3px 10px rgba(168,69,42,0.4);
+    cursor:pointer; display:flex; align-items:center; justify-content:center;
   }
   .fab:active{transform:scale(0.94);}
 
+  nav.tabs{
+    position:fixed; left:0; right:0; bottom:0; z-index:30;
+    display:flex; background:var(--card);
+    border-top:1px solid var(--line);
+    padding:6px 2px calc(6px + env(safe-area-inset-bottom));
+  }
+  nav.tabs button{
+    flex:1; background:none; border:none; padding:6px 2px;
+    font-size:9.5px; font-weight:700; letter-spacing:0.01em;
+    color:var(--ink-soft); cursor:pointer; font-family:inherit;
+    display:flex; flex-direction:column; align-items:center; gap:2px;
+  }
+  nav.tabs button .ic{font-size:18px;}
+  nav.tabs button.active{color:var(--terracotta-dark);}
+
   .sheet-backdrop{
-    position:fixed; inset:0; background:rgba(20,18,12,0.45); z-index:40;
+    position:fixed; inset:0; background:rgba(58,42,30,0.45); z-index:40;
     opacity:0; pointer-events:none; transition:opacity 0.18s ease;
   }
   .sheet-backdrop.open{opacity:1; pointer-events:auto;}
   .sheet{
     position:fixed; left:0; right:0; bottom:0; z-index:41;
-    background:var(--paper);
-    border-top:2px solid var(--ink);
+    background:var(--sand);
+    border-radius:18px 18px 0 0;
     max-height:88vh; overflow-y:auto;
     transform:translateY(100%);
     transition:transform 0.22s ease;
-    padding:16px 16px calc(20px + env(safe-area-inset-bottom));
+    padding:18px 16px calc(20px + env(safe-area-inset-bottom));
   }
   .sheet.open{transform:translateY(0);}
-  .sheet h2{font-size:15px; margin-bottom:14px;}
+  .sheet h2{font-size:16px; margin-bottom:14px;}
   .sheet .closebtn{
     position:absolute; top:12px; right:14px; background:none; border:none;
     font-size:18px; color:var(--ink-soft); cursor:pointer; padding:4px;
@@ -206,87 +179,119 @@
 
   .field{margin-bottom:12px;}
   .field label{
-    display:block; font-size:10px; text-transform:uppercase; letter-spacing:0.09em;
-    color:var(--ink-soft); margin-bottom:4px; font-weight:700;
+    display:block; font-size:10.5px; text-transform:uppercase; letter-spacing:0.06em;
+    color:var(--ink-soft); margin-bottom:5px; font-weight:800;
   }
   .field input[type=text], .field input[type=number], .field input[type=date], .field textarea, .field select{
-    width:100%; padding:9px 10px; border:1px solid var(--ink); background:var(--paper-dark);
-    font-size:14px; font-family:inherit; color:var(--ink); border-radius:var(--radius);
+    width:100%; padding:10px 11px; border:1.5px solid var(--line); background:var(--card);
+    font-size:14px; font-family:inherit; color:var(--ink); border-radius:var(--radius-sm);
   }
   .field textarea{resize:vertical; min-height:60px;}
   .typegrid{display:grid; grid-template-columns:repeat(4,1fr); gap:6px;}
   .typegrid button{
-    padding:8px 2px; border:1px solid var(--ink); background:var(--paper-dark); border-radius:var(--radius);
-    font-size:9.5px; text-transform:uppercase; letter-spacing:0.06em; font-weight:700; cursor:pointer;
+    padding:9px 2px; border:1.5px solid var(--line); background:var(--card); border-radius:var(--radius-sm);
+    font-size:9.5px; text-transform:uppercase; letter-spacing:0.04em; font-weight:800; cursor:pointer;
     color:var(--ink-soft); font-family:inherit;
   }
-  .typegrid button.selected{background:var(--ink); color:var(--paper);}
+  .typegrid button.selected{background:var(--terracotta); border-color:var(--terracotta); color:var(--terracotta-ink);}
 
   .geobtn, .photobtn{
-    width:100%; padding:10px; border:1px dashed var(--ink); background:none; border-radius:var(--radius);
+    width:100%; padding:11px; border:1.5px dashed var(--line); background:none; border-radius:var(--radius-sm);
     font-size:12.5px; cursor:pointer; color:var(--ink); font-family:inherit; text-align:left;
   }
-  .geobtn.got, .photobtn.got{border-style:solid; background:var(--paper-dark);}
+  .geobtn.got, .photobtn.got{border-style:solid; background:var(--card);}
   .geo-readout{font-family:ui-monospace,monospace; font-size:11px; color:var(--ink-soft); margin-top:4px;}
 
   .thumbrow{display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;}
-  .thumbrow .t{width:56px; height:56px; border:1px solid var(--line); overflow:hidden;}
+  .thumbrow .t{width:56px; height:56px; border-radius:var(--radius-sm); border:1px solid var(--line); overflow:hidden;}
   .thumbrow .t img{width:100%; height:100%; object-fit:cover;}
 
   .actions{display:flex; gap:8px; margin-top:16px;}
   .btn{
-    flex:1; padding:12px; border:none; border-radius:var(--radius); font-size:12.5px;
-    text-transform:uppercase; letter-spacing:0.08em; font-weight:700; cursor:pointer; font-family:inherit;
+    flex:1; padding:13px; border:none; border-radius:var(--radius-sm); font-size:12.5px;
+    text-transform:uppercase; letter-spacing:0.05em; font-weight:800; cursor:pointer; font-family:inherit;
   }
-  .btn.primary{background:var(--highway); color:var(--highway-ink);}
-  .btn.ghost{background:none; border:1px solid var(--ink); color:var(--ink);}
-  .btn.danger{background:var(--danger); color:#F4E9E4;}
+  .btn.primary{background:var(--terracotta); color:var(--terracotta-ink);}
+  .btn.ghost{background:none; border:1.5px solid var(--ink); color:var(--ink);}
+  .btn.danger{background:var(--danger); color:#FFF1EC;}
 
-  .datapage .block{
-    border:1px solid var(--ink); padding:14px; margin-bottom:12px; background:var(--paper-dark);
+  .block{border-radius:var(--radius); padding:15px; margin-bottom:12px; background:var(--card); box-shadow:0 1px 2px rgba(58,42,30,0.06);}
+  .block h3{font-size:12.5px; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px;}
+  .block p{font-size:12px; color:var(--ink-soft); margin:0 0 10px;}
+
+  .menurow{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:15px; background:var(--card); border-radius:var(--radius); margin-bottom:10px; cursor:pointer;
+    box-shadow:0 1px 2px rgba(58,42,30,0.06);
   }
-  .datapage .block h3{font-size:12px; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:8px;}
-  .datapage .block p{font-size:12px; color:var(--ink-soft); margin:0 0 10px;}
+  .menurow .left{display:flex; align-items:center; gap:12px;}
+  .menurow .ic{font-size:20px;}
+  .menurow .label{font-size:13.5px; font-weight:700;}
+  .menurow .chev{color:var(--ink-soft); font-size:16px;}
+  .backrow{display:flex; align-items:center; gap:8px; margin-bottom:12px; cursor:pointer;}
+  .backrow .arrow{font-size:16px;}
+  .backrow .label{font-size:13px; font-weight:700; color:var(--ink-soft);}
+
+  .badge{
+    display:inline-block; padding:3px 9px; border-radius:20px; font-size:9.5px; font-weight:800;
+    text-transform:uppercase; letter-spacing:0.04em;
+  }
+  .badge.planning{background:var(--sand-darker); color:var(--terracotta-dark);}
+  .badge.active{background:var(--terracotta); color:var(--terracotta-ink);}
+  .badge.completed{background:var(--eucalypt); color:#F1F6EC;}
+
+  .tripcard{background:var(--card); border-radius:var(--radius); padding:14px; margin-bottom:10px; cursor:pointer; box-shadow:0 1px 2px rgba(58,42,30,0.06);}
+  .tripcard .toprow{display:flex; justify-content:space-between; align-items:flex-start; gap:8px;}
+  .tripcard .name{font-size:14.5px; font-weight:800;}
+  .tripcard .dates{font-size:11px; color:var(--ink-soft); margin-top:2px;}
+  .tripcard .stopcount{font-size:11px; color:var(--ink-soft); margin-top:6px;}
+
+  .stoplistitem{display:flex; align-items:center; gap:8px; background:var(--card); border-radius:var(--radius-sm); padding:9px 10px; margin-bottom:6px;}
+  .stoplistitem .num{font-family:ui-monospace,monospace; font-size:11px; color:var(--ink-soft); flex:0 0 16px;}
+  .stoplistitem .nm{flex:1; font-size:13px;}
+  .stoplistitem button{background:none; border:none; color:var(--ink-soft); font-size:15px; cursor:pointer; padding:2px 5px;}
+
+  .vehform{margin-bottom:6px;}
   .toast{
-    position:fixed; left:50%; bottom:96px; transform:translateX(-50%);
-    background:var(--ink); color:var(--paper); padding:9px 16px; font-size:12.5px;
-    border-radius:2px; z-index:60; opacity:0; pointer-events:none; transition:opacity 0.2s ease;
+    position:fixed; left:50%; bottom:100px; transform:translateX(-50%);
+    background:var(--ink); color:var(--sand); padding:10px 18px; font-size:12.5px;
+    border-radius:10px; z-index:60; opacity:0; pointer-events:none; transition:opacity 0.2s ease;
   }
   .toast.show{opacity:1;}
   input[type=file]{display:none;}
+  .recbar{
+    background:var(--card); border-radius:var(--radius); padding:13px 14px; margin-bottom:12px;
+    display:flex; align-items:center; justify-content:space-between; box-shadow:0 1px 2px rgba(58,42,30,0.06);
+  }
+  .recbar.live{background:var(--terracotta); color:var(--terracotta-ink);}
+  .recbar .readout{font-family:ui-monospace,monospace; font-size:13px; font-weight:700;}
 </style>
 </head>
 <body>
 
 <header class="top">
-  <div class="titlerow">
-    <h1 class="display">Roadbook</h1>
-    <span class="sub" id="tripSpan">—</span>
-  </div>
-  <div class="odometer">
-    <div class="cell"><div class="val" id="odEntries">0</div><div class="lbl">Stops</div></div>
-    <div class="cell"><div class="val" id="odKm">0</div><div class="lbl">Km logged</div></div>
-    <div class="cell"><div class="val" id="odSpend">$0</div><div class="lbl">Spent</div></div>
-    <div class="cell"><div class="val" id="odDays">0</div><div class="lbl">Days</div></div>
-  </div>
-  <nav class="tabs">
-    <button data-tab="log" class="active">Log</button>
-    <button data-tab="spend">Spend</button>
-    <button data-tab="photos">Photos</button>
-    <button data-tab="data">Data</button>
-  </nav>
+  <h1>Roadbook</h1>
+  <span class="screenlabel" id="screenLabel">Home</span>
 </header>
 
 <main id="main"></main>
 
 <button class="fab" id="fab">+</button>
 
+<nav class="tabs">
+  <button data-tab="home" class="active"><span class="ic">🏠</span>Home</button>
+  <button data-tab="log"><span class="ic">📍</span>Log</button>
+  <button data-tab="trips"><span class="ic">🗺️</span>Trips</button>
+  <button data-tab="van"><span class="ic">🚐</span>Van</button>
+  <button data-tab="more"><span class="ic">⋯</span>More</button>
+</nav>
+
 <div class="sheet-backdrop" id="backdrop"></div>
 
 <!-- Log entry sheet -->
 <div class="sheet" id="sheetLog">
   <button class="closebtn" data-close>✕</button>
-  <h2 class="display">New stop</h2>
+  <h2>New stop</h2>
   <div class="field">
     <label>Type</label>
     <div class="typegrid" id="typeGrid">
@@ -320,7 +325,7 @@
 <!-- Expense sheet -->
 <div class="sheet" id="sheetSpend">
   <button class="closebtn" data-close>✕</button>
-  <h2 class="display">New expense</h2>
+  <h2>New expense</h2>
   <div class="field">
     <label>Category</label>
     <div class="typegrid" id="catGrid">
@@ -354,6 +359,49 @@
   </div>
 </div>
 
+<!-- Trip sheet -->
+<div class="sheet" id="sheetTrip">
+  <button class="closebtn" data-close>✕</button>
+  <h2 id="tripSheetTitle">New trip</h2>
+  <div class="field">
+    <label>Trip name</label>
+    <input type="text" id="tripName" placeholder="e.g. Gulf loop, Cape trip...">
+  </div>
+  <div class="field">
+    <label>Start date</label>
+    <input type="date" id="tripStart">
+  </div>
+  <div class="field">
+    <label>End date</label>
+    <input type="date" id="tripEnd">
+  </div>
+  <div class="field">
+    <label>Status</label>
+    <div class="typegrid" id="tripStatusGrid" style="grid-template-columns:repeat(3,1fr);">
+      <button data-status="planning" class="selected">Planning</button>
+      <button data-status="active">Active</button>
+      <button data-status="completed">Completed</button>
+    </div>
+  </div>
+  <div class="field">
+    <label>Notes</label>
+    <textarea id="tripNotes" placeholder="optional"></textarea>
+  </div>
+  <div class="field">
+    <label>Stops (in order)</label>
+    <div id="tripStopList"></div>
+    <div style="display:flex; gap:6px; margin-top:6px;">
+      <input type="text" id="tripStopName" placeholder="Stop name" style="flex:1; padding:9px 10px; border:1.5px solid var(--line); border-radius:9px; font-size:13px;">
+      <button class="btn ghost" id="tripStopAddHere" style="flex:0 0 auto; padding:9px 12px;">📍 Here</button>
+      <button class="btn primary" id="tripStopAdd" style="flex:0 0 auto; padding:9px 14px;">Add</button>
+    </div>
+  </div>
+  <div class="actions">
+    <button class="btn ghost" data-close>Cancel</button>
+    <button class="btn primary" id="tripSave">Save trip</button>
+  </div>
+</div>
+
 <!-- Detail / view sheet -->
 <div class="sheet" id="sheetDetail">
   <button class="closebtn" data-close>✕</button>
@@ -364,7 +412,7 @@
 
 <script>
 /* ---------- storage ---------- */
-const DB_NAME='roadbook', DB_VER=2;
+const DB_NAME='roadbook', DB_VER=3;
 let db;
 function openDB(){
   return new Promise((res,rej)=>{
@@ -375,6 +423,9 @@ function openDB(){
       if(!d.objectStoreNames.contains('expenses')) d.createObjectStore('expenses',{keyPath:'id'});
       if(!d.objectStoreNames.contains('photos')) d.createObjectStore('photos',{keyPath:'id'});
       if(!d.objectStoreNames.contains('tombstones')) d.createObjectStore('tombstones',{keyPath:'id'});
+      if(!d.objectStoreNames.contains('vehicles')) d.createObjectStore('vehicles',{keyPath:'id'});
+      if(!d.objectStoreNames.contains('trips')) d.createObjectStore('trips',{keyPath:'id'});
+      if(!d.objectStoreNames.contains('tracks')) d.createObjectStore('tracks',{keyPath:'id'});
     };
     r.onsuccess=e=>{db=e.target.result; res(db);};
     r.onerror=e=>rej(e);
@@ -393,20 +444,27 @@ function idClear(store){return new Promise(res=>{const r=tx(store,'readwrite').c
 function newId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8);}
 
 /* ---------- state ---------- */
-let entries=[], expenses=[], photos=[], tombstones=[];
-let activeTab='log';
-let pendingGeo={log:null, spend:null};
-let pendingPhotos=[]; // {id, dataUrl} for current log sheet
+let entries=[], expenses=[], photos=[], tombstones=[], vehicles=[], trips=[], tracks=[];
+let activeTab='home';
+let moreView=null; // null | 'spend' | 'photos' | 'assistant' | 'backup'
+let pendingGeo={log:null, spend:null, tripstop:null};
+let pendingPhotos=[];
+let pendingTripStops=[];
+let editingTripId=null;
 
 async function loadAll(){
   entries = (await idAll('entries')).sort((a,b)=>b.ts-a.ts);
   expenses = (await idAll('expenses')).sort((a,b)=>b.ts-a.ts);
   photos = await idAll('photos');
   tombstones = await idAll('tombstones');
+  vehicles = await idAll('vehicles');
+  trips = (await idAll('trips')).sort((a,b)=>(a.startDate||'').localeCompare(b.startDate||''));
+  tracks = (await idAll('tracks')).sort((a,b)=>b.startTs-a.startTs);
 }
 
 /* ---------- helpers ---------- */
 function fmtDate(ts){
+  if(!ts) return '—';
   const d=new Date(ts);
   return d.toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'2-digit'});
 }
@@ -428,110 +486,210 @@ function toast(msg){
 function typeLabel(t){
   return {campsite:'Campsite',poi:'Point of interest',fuel:'Fuel stop',note:'Note'}[t]||t;
 }
+function catColor(cat){
+  return {Fuel:'var(--rust)','Camp fees':'var(--eucalypt)',Food:'var(--ochre)',Repairs:'var(--terracotta)',Other:'var(--ink-soft)'}[cat]||'var(--ink-soft)';
+}
+function catColorForType(t){
+  return {campsite:'var(--eucalypt)',poi:'var(--ochre)',fuel:'var(--rust)',note:'var(--ink-soft)'}[t]||'var(--ink)';
+}
+function escapeHtml(s){
+  return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+const TIPS=[
+  'Download offline maps before heading into remote areas — mobile coverage is unreliable in the outback.',
+  'Check your tyre pressures (car and van) before every long leg — heat and load change them fast.',
+  'Top up water whenever you pass a tap, even if you are not low — the next one might be further than you think.',
+  'Log fuel stops as you go — it makes the range-per-tank math on remote legs much easier.',
+  'A tyre pressure gauge and a 12V compressor are cheap insurance on corrugated roads.',
+  'Weigh your rig loaded at least once — it is easy to be over your ATM without realising.',
+  'Book caravan parks ahead in school holidays; free camps fill up early too in popular spots.',
+  'Keep a paper map as backup — phones die, batteries drain, coverage drops out.',
+  'Check gas bottle levels before long remote stretches, especially in cooler months.',
+  'A UHF radio is worth it for road-train and blind-corner etiquette on outback highways.',
+  'Rotate your fridge/freezer stock so nothing goes off before a big fuel-free stretch.',
+  'Take photos of your tow setup (hitch, safety chains, wiring) so you can sanity-check it at each stop.',
+  'Plan fuel stops around known long gaps — some outback roads have 200km+ between servos.',
+  'Dust-proof your van vents and door seals before corrugated dirt roads.',
+  'Keep a physical copy of your rego, insurance, and roadside assist numbers — not just on your phone.'
+];
+function tipOfDay(){
+  const day=Math.floor(Date.now()/86400000);
+  return TIPS[day % TIPS.length];
+}
 
-/* ---------- odometer / header ---------- */
-function renderOdometer(){
-  document.getElementById('odEntries').textContent=entries.length;
+/* ---------- render dispatcher ---------- */
+const SCREEN_LABELS={home:'Home',log:'Log',trips:'Trips',van:'My Van',more:'More'};
+function render(){
+  document.getElementById('screenLabel').textContent = SCREEN_LABELS[activeTab] || '';
+  const main=document.getElementById('main');
+  if(activeTab==='home') return renderHome(main);
+  if(activeTab==='log') return renderLog(main);
+  if(activeTab==='trips') return renderTrips(main);
+  if(activeTab==='van') return renderVan(main);
+  if(activeTab==='more') return renderMore(main);
+}
+
+/* ---------- HOME ---------- */
+function renderHome(main){
+  const car=vehicles.find(v=>v.id==='car');
+  const van=vehicles.find(v=>v.id==='caravan');
+  const rigName = (van&&van.nickname) || (car&&car.nickname) || 'Set up your rig';
+  const plannedCount = trips.filter(t=>t.status==='planning'||t.status==='active').length;
+  const spend=expenses.reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
   const withGeo = entries.filter(e=>e.lat!=null).sort((a,b)=>a.ts-b.ts);
   let km=0;
-  for(let i=1;i<withGeo.length;i++){
-    km += haversine(withGeo[i-1].lat,withGeo[i-1].lon,withGeo[i].lat,withGeo[i].lon);
-  }
-  document.getElementById('odKm').textContent=Math.round(km);
-  const spend=expenses.reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
-  document.getElementById('odSpend').textContent='$'+Math.round(spend);
-  const allTs=[...entries.map(e=>e.ts),...expenses.map(e=>e.ts)];
-  let days=0, span='—';
-  if(allTs.length){
-    const min=Math.min(...allTs), max=Math.max(...allTs);
-    days=Math.max(1, Math.round((max-min)/86400000)+1);
-    span=fmtDate(min)+' – '+fmtDate(max);
-  }
-  document.getElementById('odDays').textContent=days;
-  document.getElementById('tripSpan').textContent=span;
-}
+  for(let i=1;i<withGeo.length;i++) km += haversine(withGeo[i-1].lat,withGeo[i-1].lon,withGeo[i].lat,withGeo[i].lon);
 
-/* ---------- rendering tabs ---------- */
-function render(){
-  renderOdometer();
-  const main=document.getElementById('main');
-  if(activeTab==='log') return renderLog(main);
-  if(activeTab==='spend') return renderSpend(main);
-  if(activeTab==='photos') return renderPhotos(main);
-  if(activeTab==='data') return renderData(main);
-}
+  const upcoming = trips.filter(t=>t.status==='planning'||t.status==='active').slice(0,3);
 
-function renderLog(main){
-  if(!entries.length){
-    main.innerHTML='<div class="empty"><span class="display">No stops yet</span>Tap + to log a campsite, fuel stop, or note.</div>';
-    return;
-  }
-  main.innerHTML='<div class="ledger">'+entries.map(e=>{
-    const loc = e.lat!=null ? `${e.lat.toFixed(4)}, ${e.lon.toFixed(4)}` : 'No location';
-    const photoCount = (e.photoIds||[]).length;
-    return `<div class="row" data-open-entry="${e.id}">
-      <div class="tag ${e.type}"></div>
-      <div class="body">
-        <div class="rowtop">
-          <span class="kind ${e.type}">${typeLabel(e.type)}</span>
-          <span class="date">${fmtDate(e.ts)} ${fmtTime(e.ts)}</span>
-        </div>
-        <div class="note">${escapeHtml(e.note||'(no note)')}</div>
-        <div class="meta">${loc}${photoCount?' · '+photoCount+' photo'+(photoCount>1?'s':''):''}</div>
+  main.innerHTML=`
+    <div class="greetcard">
+      <div class="eyebrow">Welcome back</div>
+      <h2>${escapeHtml(rigName)}</h2>
+      <div class="sub">${plannedCount} trip${plannedCount===1?'':'s'} planned</div>
+    </div>
+    <div class="statrow">
+      <div class="statchip"><div class="val">${entries.length}</div><div class="lbl">Stops</div></div>
+      <div class="statchip"><div class="val">${Math.round(km)}</div><div class="lbl">Km logged</div></div>
+      <div class="statchip"><div class="val">$${Math.round(spend)}</div><div class="lbl">Spent</div></div>
+    </div>
+    <div class="sectitle">Quick actions</div>
+    <div class="tilegrid">
+      <button class="tile" id="tileLog"><div class="icon">📍</div><div class="label">Log a stop</div><div class="desc">Campsite, fuel, note...</div></button>
+      <button class="tile" id="tileSpend"><div class="icon">💵</div><div class="label">Log expense</div><div class="desc">Fuel, camp fees...</div></button>
+      <button class="tile" id="tileTrip"><div class="icon">🗺️</div><div class="label">Plan a trip</div><div class="desc">Route &amp; stops</div></button>
+      <button class="tile" id="tileVan"><div class="icon">🚐</div><div class="label">My Van</div><div class="desc">Car &amp; caravan info</div></button>
+    </div>
+    ${upcoming.length?`
+    <div class="sectitle">Upcoming trips</div>
+    ${upcoming.map(t=>`<div class="tripcard" data-open-trip="${t.id}">
+      <div class="toprow">
+        <div><div class="name">${escapeHtml(t.name)}</div><div class="dates">${t.startDate?fmtDate(new Date(t.startDate).getTime()):''}${t.endDate?' – '+fmtDate(new Date(t.endDate).getTime()):''}</div></div>
+        <span class="badge ${t.status}">${t.status}</span>
       </div>
-    </div>`;
-  }).join('')+'</div>';
-  main.querySelectorAll('[data-open-entry]').forEach(el=>{
-    el.addEventListener('click',()=>openEntryDetail(el.dataset.openEntry));
+      <div class="stopcount">${(t.stops||[]).length} stop${(t.stops||[]).length===1?'':'s'}</div>
+    </div>`).join('')}
+    `:''}
+    <div class="sectitle">Tip of the day</div>
+    <div class="tipcard"><div class="lbl">Good to know</div>${escapeHtml(tipOfDay())}</div>
+  `;
+  document.getElementById('tileLog').onclick=()=>{ activeTab='log'; setActiveTabUI(); render(); openLogSheet(); };
+  document.getElementById('tileSpend').onclick=()=>{ activeTab='more'; moreView='spend'; setActiveTabUI(); render(); openSpendSheet(); };
+  document.getElementById('tileTrip').onclick=()=>{ activeTab='trips'; setActiveTabUI(); render(); openTripSheet(); };
+  document.getElementById('tileVan').onclick=()=>{ activeTab='van'; setActiveTabUI(); render(); };
+  main.querySelectorAll('[data-open-trip]').forEach(el=>{
+    el.addEventListener('click',()=>{ activeTab='trips'; setActiveTabUI(); render(); openTripDetail(el.dataset.openTrip); });
   });
 }
 
-function renderSpend(main){
-  if(!expenses.length){
-    main.innerHTML='<div class="empty"><span class="display">No expenses yet</span>Tap + to log fuel, camp fees, food, or repairs.</div>';
-    return;
-  }
-  main.innerHTML='<div class="ledger">'+expenses.map(e=>{
-    const loc = e.lat!=null ? `${e.lat.toFixed(4)}, ${e.lon.toFixed(4)}` : '';
-    const odo = e.odo ? 'Odo '+e.odo+'km' : '';
-    const meta=[odo,loc].filter(Boolean).join(' · ');
-    return `<div class="row" data-open-expense="${e.id}">
-      <div class="tag fuel" style="background:${catColor(e.category)}"></div>
-      <div class="body">
-        <div class="rowtop">
-          <span class="kind" style="color:${catColor(e.category)}">${e.category}</span>
-          <span class="date">${fmtDate(e.ts)}</span>
-        </div>
-        <div class="note">${escapeHtml(e.note||e.category)}</div>
-        ${meta?`<div class="meta">${meta}</div>`:''}
-      </div>
-      <div class="amount">$${parseFloat(e.amount).toFixed(2)}</div>
+/* ---------- LOG ---------- */
+function renderLog(main){
+  const recBar = recording ? `
+    <div class="recbar live">
+      <div><div style="font-size:11px; opacity:0.85; text-transform:uppercase; letter-spacing:0.05em; font-weight:800;">Recording route</div><div class="readout" id="recordReadout">0:00 · 0.0 km</div></div>
+      <button class="btn ghost" id="recStopBtn" style="flex:0 0 auto; background:rgba(255,255,255,0.15); border-color:rgba(255,255,255,0.6); color:#fff;">Stop</button>
+    </div>` : `
+    <div class="recbar">
+      <div><div style="font-size:11px; text-transform:uppercase; letter-spacing:0.05em; font-weight:800; color:var(--ink-soft);">Trip recorder</div><div style="font-size:12px; color:var(--ink-soft);">Track your route while driving</div></div>
+      <button class="btn primary" id="recStartBtn" style="flex:0 0 auto;">Start</button>
     </div>`;
-  }).join('')+'</div>';
+
+  const list = !entries.length ? '<div class="empty"><span class="t">No stops yet</span>Tap + to log a campsite, fuel stop, or note.</div>' :
+    entries.map(e=>{
+      const loc = e.lat!=null ? `${e.lat.toFixed(4)}, ${e.lon.toFixed(4)}` : 'No location';
+      const photoCount = (e.photoIds||[]).length;
+      return `<div class="row" data-open-entry="${e.id}">
+        <div class="tag ${e.type}"></div>
+        <div class="body">
+          <div class="rowtop">
+            <span class="kind ${e.type}">${typeLabel(e.type)}</span>
+            <span class="date">${fmtDate(e.ts)} ${fmtTime(e.ts)}</span>
+          </div>
+          <div class="note">${escapeHtml(e.note||'(no note)')}</div>
+          <div class="meta">${loc}${photoCount?' · '+photoCount+' photo'+(photoCount>1?'s':''):''}</div>
+        </div>
+      </div>`;
+    }).join('');
+
+  const tracksHtml = tracks.length ? `
+    <div class="sectitle">Recorded routes</div>
+    ${tracks.map(t=>`<div class="row" data-open-track="${t.id}">
+      <div class="tag" style="background:var(--terracotta)"></div>
+      <div class="body">
+        <div class="rowtop"><span class="kind" style="color:var(--terracotta-dark)">${escapeHtml(t.name)}</span><span class="date">${fmtDate(t.startTs)}</span></div>
+        <div class="meta">${t.distanceKm.toFixed(1)} km · ${Math.max(1,Math.round((t.endTs-t.startTs)/60000))} min</div>
+      </div>
+    </div>`).join('')}
+  ` : '';
+
+  main.innerHTML = recBar + '<div class="sectitle">Stops</div>' + list + tracksHtml;
+
+  if(recording){
+    document.getElementById('recStopBtn').onclick=stopRecording;
+    updateRecordingReadout();
+  } else {
+    document.getElementById('recStartBtn').onclick=startRecording;
+  }
+  main.querySelectorAll('[data-open-entry]').forEach(el=>{
+    el.addEventListener('click',()=>openEntryDetail(el.dataset.openEntry));
+  });
+  main.querySelectorAll('[data-open-track]').forEach(el=>{
+    el.addEventListener('click',()=>openTrackDetail(el.dataset.openTrack));
+  });
+}
+
+/* ---------- SPEND (inside More) ---------- */
+function renderSpend(main){
+  const list = !expenses.length ? '<div class="empty"><span class="t">No expenses yet</span>Tap + to log fuel, camp fees, food, or repairs.</div>' :
+    expenses.map(e=>{
+      const loc = e.lat!=null ? `${e.lat.toFixed(4)}, ${e.lon.toFixed(4)}` : '';
+      const odo = e.odo ? 'Odo '+e.odo+'km' : '';
+      const meta=[odo,loc].filter(Boolean).join(' · ');
+      return `<div class="row" data-open-expense="${e.id}">
+        <div class="tag" style="background:${catColor(e.category)}"></div>
+        <div class="body">
+          <div class="rowtop">
+            <span class="kind" style="color:${catColor(e.category)}">${e.category}</span>
+            <span class="date">${fmtDate(e.ts)}</span>
+          </div>
+          <div class="note">${escapeHtml(e.note||e.category)}</div>
+          ${meta?`<div class="meta">${meta}</div>`:''}
+        </div>
+        <div class="amount">$${parseFloat(e.amount).toFixed(2)}</div>
+      </div>`;
+    }).join('');
+  main.innerHTML = backRow('More') + '<div class="sectitle">Spend</div>' + list;
+  wireBackRow(main);
   main.querySelectorAll('[data-open-expense]').forEach(el=>{
     el.addEventListener('click',()=>openExpenseDetail(el.dataset.openExpense));
   });
 }
-function catColor(cat){
-  return {Fuel:'var(--rust)','Camp fees':'var(--eucalypt)',Food:'var(--ochre)',Repairs:'var(--highway)',Other:'var(--ink-soft)'}[cat]||'var(--ink-soft)';
-}
 
 function renderPhotos(main){
-  if(!photos.length){
-    main.innerHTML='<div class="empty"><span class="display">No photos yet</span>Attach photos when logging a stop.</div>';
-    return;
-  }
-  const sorted=[...photos].sort((a,b)=>b.ts-a.ts);
-  main.innerHTML='<div class="photogrid">'+sorted.map(p=>
-    `<div class="thumb" data-open-photo="${p.id}"><img src="${p.dataUrl}" loading="lazy"></div>`
-  ).join('')+'</div>';
+  const grid = !photos.length ? '<div class="empty"><span class="t">No photos yet</span>Attach photos when logging a stop.</div>' :
+    '<div class="photogrid">'+[...photos].sort((a,b)=>b.ts-a.ts).map(p=>
+      `<div class="thumb" data-open-photo="${p.id}"><img src="${p.dataUrl}" loading="lazy"></div>`
+    ).join('')+'</div>';
+  main.innerHTML = backRow('More') + '<div class="sectitle">Photos</div>' + grid;
+  wireBackRow(main);
   main.querySelectorAll('[data-open-photo]').forEach(el=>{
     el.addEventListener('click',()=>openPhotoDetail(el.dataset.openPhoto));
   });
 }
 
-function renderData(main){
-  main.innerHTML=`<div class="datapage">
+function renderAssistant(main){
+  main.innerHTML = backRow('More') + `
+    <div class="sectitle">Assistant</div>
+    <div class="block">
+      <h3>AI chat — coming soon</h3>
+      <p>A chat assistant that knows your rig and trip history needs a small server-side piece to keep the AI API key safe (a public app file can't hold secrets). This is being set up separately — once it's live, this tab turns into a full chat.</p>
+    </div>
+  `;
+  wireBackRow(main);
+}
+
+function renderBackup(main){
+  main.innerHTML = backRow('More') + `<div class="sectitle">Backup &amp; sync</div>
     <div class="block">
       <h3>Sync across devices</h3>
       <p>${googleConnected
@@ -548,13 +706,13 @@ function renderData(main){
     </div>
     <div class="block">
       <h3>Back up everything</h3>
-      <p>Saves all stops, expenses, and photos to one file. Opens Android's share sheet — pick Drive to save it straight there, then open it on your laptop at drive.google.com.</p>
-      <button class="btn primary" id="exportJson" style="width:100%">Save full backup to Drive (.json)</button>
+      <p>Saves all stops, expenses, photos, trips, and vehicle info to one file. Opens Android's share sheet — pick Drive to save it straight there.</p>
+      <button class="btn primary" id="exportJson" style="width:100%">Save full backup (.json)</button>
     </div>
     <div class="block">
       <h3>Expenses as spreadsheet</h3>
-      <p>A .csv file — pick Drive from the share sheet, then open it with Google Sheets on your laptop.</p>
-      <button class="btn primary" id="exportCsv" style="width:100%">Save expenses to Drive (.csv)</button>
+      <p>A .csv file — pick Drive from the share sheet, then open it with Google Sheets.</p>
+      <button class="btn primary" id="exportCsv" style="width:100%">Save expenses (.csv)</button>
     </div>
     <div class="block">
       <h3>Restore from backup</h3>
@@ -563,15 +721,12 @@ function renderData(main){
       <input type="file" id="importInput" accept="application/json">
     </div>
     <div class="block">
-      <h3>Install as an app</h3>
-      <p>In Chrome's menu, tap "Add to Home screen" so Roadbook opens full-screen like a normal app, no Play Store needed. Works offline once installed — nothing here relies on the internet except syncing and Drive backup.</p>
-    </div>
-    <div class="block">
       <h3>Erase everything</h3>
-      <p>Clears all stops, expenses, and photos from this device only. This does not touch your synced copy in Drive or your other device. Export a backup first if you want to keep them.</p>
+      <p>Clears all local data on this device only. This does not touch your synced copy in Drive or your other device.</p>
       <button class="btn danger" id="wipeAll" style="width:100%">Erase all data</button>
     </div>
-  </div>`;
+  `;
+  wireBackRow(main);
   if(googleConnected){
     document.getElementById('syncNowBtn').onclick=()=>syncNow(true);
     document.getElementById('disconnectBtn').onclick=disconnectGoogle;
@@ -585,16 +740,232 @@ function renderData(main){
   document.getElementById('wipeAll').onclick=wipeAll;
 }
 
-function escapeHtml(s){
-  return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function backRow(label){
+  return `<div class="backrow" id="backRow"><span class="arrow">←</span><span class="label">${label}</span></div>`;
+}
+function wireBackRow(main){
+  const el=main.querySelector('#backRow');
+  if(el) el.addEventListener('click',()=>{ moreView=null; setActiveTabUI(); render(); });
 }
 
-/* ---------- detail sheets ---------- */
+/* ---------- MORE (menu) ---------- */
+function renderMore(main){
+  if(moreView==='spend') return renderSpend(main);
+  if(moreView==='photos') return renderPhotos(main);
+  if(moreView==='assistant') return renderAssistant(main);
+  if(moreView==='backup') return renderBackup(main);
+  main.innerHTML = `
+    <div class="sectitle">More</div>
+    <div class="menurow" data-view="spend"><div class="left"><span class="ic">💵</span><span class="label">Spend</span></div><span class="chev">›</span></div>
+    <div class="menurow" data-view="photos"><div class="left"><span class="ic">📷</span><span class="label">Photos</span></div><span class="chev">›</span></div>
+    <div class="menurow" data-view="assistant"><div class="left"><span class="ic">💬</span><span class="label">Assistant</span></div><span class="chev">›</span></div>
+    <div class="menurow" data-view="backup"><div class="left"><span class="ic">☁️</span><span class="label">Backup &amp; sync</span></div><span class="chev">›</span></div>
+  `;
+  main.querySelectorAll('[data-view]').forEach(el=>{
+    el.addEventListener('click',()=>{ moreView=el.dataset.view; setActiveTabUI(); render(); });
+  });
+}
+
+/* ---------- VAN (profile) ---------- */
+function vehField(kind, key, label, type, opts){
+  const v = vehicles.find(x=>x.id===kind) || {};
+  if(type==='chips'){
+    return `<div class="field"><label>${label}</label><div class="typegrid" style="grid-template-columns:repeat(${Math.min(opts.length,4)},1fr);">
+      ${opts.map(o=>`<button data-kind="${kind}" data-key="${key}" data-val="${o}" class="vehchip ${v[key]===o?'selected':''}">${o}</button>`).join('')}
+    </div></div>`;
+  }
+  if(type==='toggle'){
+    return `<div class="field"><label>${label}</label><div class="typegrid" style="grid-template-columns:repeat(2,1fr);">
+      <button data-kind="${kind}" data-key="${key}" data-val="true" class="vehchip ${v[key]===true?'selected':''}">Yes</button>
+      <button data-kind="${kind}" data-key="${key}" data-val="false" class="vehchip ${v[key]===false||v[key]===undefined?'selected':''}">No</button>
+    </div></div>`;
+  }
+  const val = v[key]!=null ? v[key] : '';
+  return `<div class="field"><label>${label}</label><input type="${type}" data-kind="${kind}" data-key="${key}" value="${escapeHtml(String(val))}"></div>`;
+}
+function renderVan(main){
+  main.innerHTML = `
+    <div class="sectitle">Tow vehicle</div>
+    <div class="card vehform" id="carForm">
+      ${vehField('car','nickname','Nickname','text')}
+      ${vehField('car','make','Make','text')}
+      ${vehField('car','model','Model','text')}
+      ${vehField('car','year','Year','number')}
+      ${vehField('car','fuelType','Fuel type','chips',['Diesel','Petrol','Hybrid','Electric'])}
+      ${vehField('car','towCapacityKg','Tow capacity (kg)','number')}
+      ${vehField('car','rego','Rego / plate','text')}
+      ${vehField('car','notes','Notes','text')}
+    </div>
+    <div class="sectitle">Caravan</div>
+    <div class="card vehform" id="caravanForm">
+      ${vehField('caravan','nickname','Nickname','text')}
+      ${vehField('caravan','type','Type','chips',['Caravan','Camper trailer','Motorhome','5th wheeler','Pop-top','Other'])}
+      ${vehField('caravan','lengthM','Length (m)','number')}
+      ${vehField('caravan','tareKg','Tare weight (kg)','number')}
+      ${vehField('caravan','atmKg','ATM (kg)','number')}
+      ${vehField('caravan','waterCapacityL','Water capacity (L)','number')}
+      ${vehField('caravan','gasBottles','Gas bottles','number')}
+      ${vehField('caravan','hasSolar','Solar power','toggle')}
+      ${vehField('caravan','notes','Notes','text')}
+    </div>
+  `;
+  main.querySelectorAll('input[data-kind]').forEach(el=>{
+    el.addEventListener('change',()=>saveVehicle(el.dataset.kind, el.dataset.key, el.value));
+  });
+  main.querySelectorAll('.vehchip').forEach(el=>{
+    el.addEventListener('click',()=>{
+      const kind=el.dataset.kind, key=el.dataset.key;
+      let val=el.dataset.val;
+      if(val==='true') val=true; else if(val==='false') val=false;
+      main.querySelectorAll(`.vehchip[data-kind="${kind}"][data-key="${key}"]`).forEach(x=>x.classList.remove('selected'));
+      el.classList.add('selected');
+      saveVehicle(kind,key,val);
+    });
+  });
+}
+async function saveVehicle(kind, key, value){
+  let v = vehicles.find(x=>x.id===kind);
+  if(!v){ v={id:kind}; vehicles.push(v); }
+  v[key]=value;
+  v.updatedAt=Date.now();
+  await idPut('vehicles', v);
+  toast('Saved');
+  scheduleSync();
+}
+
+/* ---------- TRIPS ---------- */
+function renderTrips(main){
+  if(!trips.length){
+    main.innerHTML='<div class="empty"><span class="t">No trips yet</span>Tap + to plan your first trip.</div>';
+    return;
+  }
+  main.innerHTML = trips.map(t=>`<div class="tripcard" data-open-trip="${t.id}">
+    <div class="toprow">
+      <div><div class="name">${escapeHtml(t.name)}</div><div class="dates">${t.startDate?fmtDate(new Date(t.startDate).getTime()):''}${t.endDate?' – '+fmtDate(new Date(t.endDate).getTime()):''}</div></div>
+      <span class="badge ${t.status}">${t.status}</span>
+    </div>
+    <div class="stopcount">${(t.stops||[]).length} stop${(t.stops||[]).length===1?'':'s'}</div>
+  </div>`).join('');
+  main.querySelectorAll('[data-open-trip]').forEach(el=>{
+    el.addEventListener('click',()=>openTripDetail(el.dataset.openTrip));
+  });
+}
+function buildMapsLink(stops){
+  const pts=(stops||[]).filter(s=>s.lat!=null || (s.name&&s.name.trim()));
+  if(!pts.length) return null;
+  const toParam=s=> s.lat!=null ? `${s.lat},${s.lon}` : encodeURIComponent(s.name);
+  if(pts.length===1) return `https://www.google.com/maps/dir/?api=1&destination=${toParam(pts[0])}&travelmode=driving`;
+  const destination=toParam(pts[pts.length-1]);
+  const waypoints=pts.slice(0,-1).map(toParam).join('|');
+  return `https://www.google.com/maps/dir/?api=1&destination=${destination}&waypoints=${waypoints}&travelmode=driving`;
+}
+function openTripDetail(id){
+  const t=trips.find(x=>x.id===id); if(!t) return;
+  const mapsLink=buildMapsLink(t.stops);
+  document.getElementById('detailBody').innerHTML=`
+    <h2>${escapeHtml(t.name)}</h2>
+    <div class="meta" style="margin:8px 0;"><span class="badge ${t.status}">${t.status}</span> &nbsp; ${t.startDate?fmtDate(new Date(t.startDate).getTime()):''}${t.endDate?' – '+fmtDate(new Date(t.endDate).getTime()):''}</div>
+    ${t.notes?`<p style="font-size:14px;">${escapeHtml(t.notes)}</p>`:''}
+    <div class="sectitle" style="margin-top:14px;">Stops</div>
+    ${(t.stops||[]).map((s,i)=>`<div class="stoplistitem"><span class="num">${i+1}.</span><span class="nm">${escapeHtml(s.name)}${s.lat!=null?' 📍':''}</span></div>`).join('') || '<div class="meta">No stops added</div>'}
+    ${mapsLink?`<button class="btn primary" id="openMapsBtn" style="width:100%; margin-top:10px;">Open route in Google Maps</button>`:''}
+    <div class="actions">
+      <button class="btn ghost" id="editTripBtn">Edit</button>
+      <button class="btn danger" id="delTripBtn">Delete</button>
+    </div>`;
+  if(mapsLink) document.getElementById('openMapsBtn').onclick=()=>window.open(mapsLink,'_blank');
+  document.getElementById('editTripBtn').onclick=()=>{ closeSheets(); openTripSheet(t); };
+  document.getElementById('delTripBtn').onclick=async()=>{
+    if(!confirm('Delete this trip?')) return;
+    await idDelete('trips', id);
+    await idPut('tombstones',{id, store:'trips', deletedAt:Date.now()});
+    await loadAll(); closeSheets(); render(); toast('Trip deleted'); scheduleSync();
+  };
+  openSheet('sheetDetail');
+}
+function openTripSheet(existing){
+  editingTripId = existing ? existing.id : null;
+  document.getElementById('tripSheetTitle').textContent = existing ? 'Edit trip' : 'New trip';
+  document.getElementById('tripName').value = existing ? existing.name : '';
+  document.getElementById('tripStart').value = existing ? (existing.startDate||'') : '';
+  document.getElementById('tripEnd').value = existing ? (existing.endDate||'') : '';
+  document.getElementById('tripNotes').value = existing ? (existing.notes||'') : '';
+  document.getElementById('tripStopName').value='';
+  pendingTripStops = existing ? JSON.parse(JSON.stringify(existing.stops||[])) : [];
+  pendingGeo.tripstop=null;
+  const status = existing ? existing.status : 'planning';
+  document.querySelectorAll('#tripStatusGrid button').forEach(b=>b.classList.toggle('selected', b.dataset.status===status));
+  renderTripStopList();
+  openSheet('sheetTrip');
+}
+function renderTripStopList(){
+  const el=document.getElementById('tripStopList');
+  if(!pendingTripStops.length){ el.innerHTML='<div class="meta">No stops added yet</div>'; return; }
+  el.innerHTML = pendingTripStops.map((s,i)=>`<div class="stoplistitem">
+    <span class="num">${i+1}.</span><span class="nm">${escapeHtml(s.name)}${s.lat!=null?' 📍':''}</span>
+    <button data-up="${i}">↑</button><button data-down="${i}">↓</button><button data-rm="${i}">✕</button>
+  </div>`).join('');
+  el.querySelectorAll('[data-up]').forEach(b=>b.addEventListener('click',()=>{
+    const i=+b.dataset.up; if(i>0){ [pendingTripStops[i-1],pendingTripStops[i]]=[pendingTripStops[i],pendingTripStops[i-1]]; renderTripStopList(); }
+  }));
+  el.querySelectorAll('[data-down]').forEach(b=>b.addEventListener('click',()=>{
+    const i=+b.dataset.down; if(i<pendingTripStops.length-1){ [pendingTripStops[i+1],pendingTripStops[i]]=[pendingTripStops[i],pendingTripStops[i+1]]; renderTripStopList(); }
+  }));
+  el.querySelectorAll('[data-rm]').forEach(b=>b.addEventListener('click',()=>{
+    pendingTripStops.splice(+b.dataset.rm,1); renderTripStopList();
+  }));
+}
+document.querySelectorAll('#tripStatusGrid button').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('#tripStatusGrid button').forEach(x=>x.classList.remove('selected'));
+    b.classList.add('selected');
+  });
+});
+document.getElementById('tripStopAdd').addEventListener('click',()=>{
+  const name=document.getElementById('tripStopName').value.trim();
+  if(!name){ toast('Enter a stop name'); return; }
+  const geo=pendingGeo.tripstop;
+  pendingTripStops.push({id:newId(), name, lat:geo?geo.lat:null, lon:geo?geo.lon:null});
+  document.getElementById('tripStopName').value='';
+  pendingGeo.tripstop=null;
+  renderTripStopList();
+});
+document.getElementById('tripStopAddHere').addEventListener('click',()=>{
+  if(!navigator.geolocation){ toast('Location not available'); return; }
+  toast('Locating…');
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const name=document.getElementById('tripStopName').value.trim() || 'Stop';
+    pendingTripStops.push({id:newId(), name, lat:pos.coords.latitude, lon:pos.coords.longitude});
+    document.getElementById('tripStopName').value='';
+    renderTripStopList();
+    toast('Stop added with location');
+  },()=>toast('Could not get location'),{enableHighAccuracy:true,timeout:15000});
+});
+document.getElementById('tripSave').addEventListener('click',async()=>{
+  const name=document.getElementById('tripName').value.trim();
+  if(!name){ toast('Enter a trip name'); return; }
+  const status=document.querySelector('#tripStatusGrid button.selected').dataset.status;
+  const trip={
+    id: editingTripId || newId(),
+    name,
+    startDate: document.getElementById('tripStart').value || null,
+    endDate: document.getElementById('tripEnd').value || null,
+    notes: document.getElementById('tripNotes').value.trim(),
+    status,
+    stops: pendingTripStops,
+    createdAt: editingTripId ? (trips.find(t=>t.id===editingTripId)||{}).createdAt||Date.now() : Date.now(),
+    updatedAt: Date.now()
+  };
+  await idPut('trips', trip);
+  await loadAll(); closeSheets(); activeTab='trips'; setActiveTabUI(); render(); toast('Trip saved'); scheduleSync();
+});
+
+/* ---------- detail sheets (entries / expenses / photos / tracks) ---------- */
 function openEntryDetail(id){
   const e=entries.find(x=>x.id===id); if(!e) return;
   const pics=(e.photoIds||[]).map(pid=>photos.find(p=>p.id===pid)).filter(Boolean);
   document.getElementById('detailBody').innerHTML=`
-    <h2 class="display" style="color:${catColorForType(e.type)}">${typeLabel(e.type)}</h2>
+    <h2 style="color:${catColorForType(e.type)}">${typeLabel(e.type)}</h2>
     <div class="meta" style="margin:8px 0;">${fmtDate(e.ts)} ${fmtTime(e.ts)}</div>
     <p style="font-size:15px; line-height:1.5;">${escapeHtml(e.note||'(no note)')}</p>
     ${e.lat!=null?`<div class="geo-readout">📍 ${e.lat.toFixed(5)}, ${e.lon.toFixed(5)}</div>`:''}
@@ -614,15 +985,12 @@ function openEntryDetail(id){
   };
   openSheet('sheetDetail');
 }
-function catColorForType(t){
-  return {campsite:'var(--eucalypt)',poi:'var(--highway)',fuel:'var(--rust)',note:'var(--ochre)'}[t]||'var(--ink)';
-}
 function openExpenseDetail(id){
   const e=expenses.find(x=>x.id===id); if(!e) return;
   document.getElementById('detailBody').innerHTML=`
-    <h2 class="display" style="color:${catColor(e.category)}">${e.category}</h2>
+    <h2 style="color:${catColor(e.category)}">${e.category}</h2>
     <div class="meta" style="margin:8px 0;">${fmtDate(e.ts)}</div>
-    <p style="font-size:22px; font-family:ui-monospace,monospace; font-weight:700;">$${parseFloat(e.amount).toFixed(2)}</p>
+    <p style="font-size:22px; font-family:ui-monospace,monospace; font-weight:800;">$${parseFloat(e.amount).toFixed(2)}</p>
     ${e.odo?`<div class="meta">Odometer: ${e.odo} km</div>`:''}
     ${e.note?`<p style="font-size:14px;">${escapeHtml(e.note)}</p>`:''}
     ${e.lat!=null?`<div class="geo-readout">📍 ${e.lat.toFixed(5)}, ${e.lon.toFixed(5)}</div>`:''}
@@ -640,7 +1008,7 @@ function openExpenseDetail(id){
 function openPhotoDetail(id){
   const p=photos.find(x=>x.id===id); if(!p) return;
   document.getElementById('detailBody').innerHTML=`
-    <img src="${p.dataUrl}" style="width:100%; border:1px solid var(--ink);">
+    <img src="${p.dataUrl}" style="width:100%; border-radius:12px;">
     <div class="meta" style="margin-top:10px;">${fmtDate(p.ts)}</div>
     <div class="actions">
       <button class="btn ghost" data-close>Close</button>
@@ -655,6 +1023,39 @@ function openPhotoDetail(id){
   };
   openSheet('sheetDetail');
 }
+function openTrackDetail(id){
+  const t=tracks.find(x=>x.id===id); if(!t) return;
+  const mapsLink=buildTrackMapsLink(t.points);
+  document.getElementById('detailBody').innerHTML=`
+    <h2>${escapeHtml(t.name)}</h2>
+    <div class="meta" style="margin:8px 0;">${fmtDate(t.startTs)} · ${t.distanceKm.toFixed(1)} km · ${Math.max(1,Math.round((t.endTs-t.startTs)/60000))} min</div>
+    ${mapsLink?`<button class="btn primary" id="openTrackMapsBtn" style="width:100%; margin-top:6px;">Open route in Google Maps</button>`:''}
+    <div class="actions">
+      <button class="btn ghost" data-close>Close</button>
+      <button class="btn danger" id="delTrack">Delete</button>
+    </div>`;
+  if(mapsLink) document.getElementById('openTrackMapsBtn').onclick=()=>window.open(mapsLink,'_blank');
+  document.getElementById('delTrack').onclick=async()=>{
+    await idDelete('tracks', id);
+    await idPut('tombstones',{id, store:'tracks', deletedAt:Date.now()});
+    await loadAll(); closeSheets(); render(); toast('Route deleted'); scheduleSync();
+  };
+  openSheet('sheetDetail');
+}
+function buildTrackMapsLink(points){
+  if(!points || points.length<2) return null;
+  const maxWaypoints=8;
+  let sampled=points;
+  if(points.length>maxWaypoints+2){
+    const step=Math.ceil(points.length/(maxWaypoints+2));
+    sampled=[]; for(let i=0;i<points.length;i+=step) sampled.push(points[i]);
+    if(sampled[sampled.length-1]!==points[points.length-1]) sampled.push(points[points.length-1]);
+  }
+  const toParam=p=>`${p.lat},${p.lon}`;
+  const destination=toParam(sampled[sampled.length-1]);
+  const waypoints=sampled.slice(0,-1).map(toParam).join('|');
+  return `https://www.google.com/maps/dir/?api=1&destination=${destination}&waypoints=${waypoints}&travelmode=driving`;
+}
 
 /* ---------- sheets open/close ---------- */
 function openSheet(id){
@@ -668,10 +1069,16 @@ function closeSheets(){
 document.getElementById('backdrop').addEventListener('click',closeSheets);
 document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',closeSheets));
 
-/* ---------- fab / new entry flows ---------- */
+/* ---------- fab ---------- */
 document.getElementById('fab').addEventListener('click',()=>{
-  if(activeTab==='spend') openSpendSheet(); else openLogSheet();
+  if(activeTab==='log') openLogSheet();
+  else if(activeTab==='trips') openTripSheet();
+  else if(activeTab==='more' && moreView==='spend') openSpendSheet();
 });
+function updateFabVisibility(){
+  const show = activeTab==='log' || activeTab==='trips' || (activeTab==='more' && moreView==='spend');
+  document.getElementById('fab').style.display = show ? 'flex' : 'none';
+}
 
 function openLogSheet(){
   document.getElementById('logNote').value='';
@@ -739,7 +1146,7 @@ document.getElementById('spendSave').addEventListener('click',async()=>{
   const geo=pendingGeo.spend;
   const expense={id:newId(), ts:Date.now(), category, amount, odo:odo?parseFloat(odo):null, note, lat:geo?geo.lat:null, lon:geo?geo.lon:null};
   await idPut('expenses',expense);
-  await loadAll(); closeSheets(); activeTab='spend'; setActiveTabUI(); render(); toast('Expense saved'); scheduleSync();
+  await loadAll(); closeSheets(); activeTab='more'; moreView='spend'; setActiveTabUI(); render(); toast('Expense saved'); scheduleSync();
 });
 
 function captureGeo(which){
@@ -754,7 +1161,7 @@ function captureGeo(which){
     readout.textContent=pos.coords.latitude.toFixed(5)+', '+pos.coords.longitude.toFixed(5)+' (±'+Math.round(pos.coords.accuracy)+'m)';
   },err=>{
     btn.textContent='📍 Capture current location';
-    readout.textContent='Couldn\'t get location — check permission, try again.';
+    readout.textContent='Could not get location — check permission, try again.';
   },{enableHighAccuracy:true, timeout:15000});
 }
 
@@ -775,6 +1182,42 @@ function resizeImage(file){
   });
 }
 
+/* ---------- trip recorder (start/stop GPS route) ---------- */
+let recording=false, recordWatchId=null, recordPoints=[], recordStartTs=null, recordTimerInterval=null;
+function startRecording(){
+  if(!navigator.geolocation){ toast('Location not available on this device.'); return; }
+  recording=true; recordPoints=[]; recordStartTs=Date.now();
+  recordWatchId=navigator.geolocation.watchPosition(pos=>{
+    recordPoints.push({lat:pos.coords.latitude, lon:pos.coords.longitude, ts:Date.now()});
+    updateRecordingReadout();
+  }, err=>{ toast('Location error — check permission'); }, {enableHighAccuracy:true, maximumAge:5000, timeout:20000});
+  recordTimerInterval=setInterval(updateRecordingReadout,1000);
+  if(activeTab==='log') render();
+  toast('Recording started — keep the app open while driving');
+}
+async function stopRecording(){
+  if(recordWatchId!=null) navigator.geolocation.clearWatch(recordWatchId);
+  clearInterval(recordTimerInterval);
+  recording=false;
+  const pts=recordPoints; recordPoints=[];
+  if(pts.length<2){ toast('Not enough GPS points captured'); if(activeTab==='log') render(); return; }
+  let dist=0; for(let i=1;i<pts.length;i++) dist+=haversine(pts[i-1].lat,pts[i-1].lon,pts[i].lat,pts[i].lon);
+  const name=prompt('Name this route (optional):','') || ('Route '+fmtDate(recordStartTs));
+  const track={id:newId(), name, startTs:recordStartTs, endTs:Date.now(), points:pts, distanceKm:dist, updatedAt:Date.now()};
+  await idPut('tracks', track);
+  await loadAll();
+  if(activeTab==='log') render();
+  toast('Route saved'); scheduleSync();
+}
+function updateRecordingReadout(){
+  const el=document.getElementById('recordReadout');
+  if(!el) return;
+  const secs=Math.floor((Date.now()-recordStartTs)/1000);
+  const mins=Math.floor(secs/60), s=secs%60;
+  let dist=0; for(let i=1;i<recordPoints.length;i++) dist+=haversine(recordPoints[i-1].lat,recordPoints[i-1].lon,recordPoints[i].lat,recordPoints[i].lon);
+  el.textContent = mins+':'+String(s).padStart(2,'0')+' · '+dist.toFixed(1)+' km';
+}
+
 /* ---------- export / import ---------- */
 function download(filename, content, type){
   const blob=new Blob([content],{type});
@@ -792,14 +1235,13 @@ async function shareOrDownload(filename, content, type){
       return;
     }
   }catch(err){
-    if(err && err.name==='AbortError') return; // user cancelled the share sheet, not an error
+    if(err && err.name==='AbortError') return;
   }
-  // fallback: plain download (goes to the Downloads folder instead)
   download(filename, content, type);
   toast('Saved to Downloads — open the Drive app to upload it');
 }
 function exportJson(){
-  const payload={version:1, exportedAt:new Date().toISOString(), entries, expenses, photos};
+  const payload={version:2, exportedAt:new Date().toISOString(), entries, expenses, photos, vehicles, trips, tracks};
   shareOrDownload('roadbook-backup-'+new Date().toISOString().slice(0,10)+'.json', JSON.stringify(payload), 'application/json');
 }
 function exportCsv(){
@@ -818,9 +1260,13 @@ function importJson(e){
       const data=JSON.parse(ev.target.result);
       if(!confirm('This replaces all data currently on this device with the backup file. Continue?')) return;
       await idClear('entries'); await idClear('expenses'); await idClear('photos');
+      await idClear('vehicles'); await idClear('trips'); await idClear('tracks');
       for(const x of data.entries||[]) await idPut('entries',x);
       for(const x of data.expenses||[]) await idPut('expenses',x);
       for(const x of data.photos||[]) await idPut('photos',x);
+      for(const x of data.vehicles||[]) await idPut('vehicles',x);
+      for(const x of data.trips||[]) await idPut('trips',x);
+      for(const x of data.tracks||[]) await idPut('tracks',x);
       await loadAll(); render(); toast('Backup restored');
     }catch(err){ toast('Could not read that file'); }
   };
@@ -828,8 +1274,9 @@ function importJson(e){
   e.target.value='';
 }
 async function wipeAll(){
-  if(!confirm('Erase all stops, expenses, and photos from this device? This cannot be undone. Your Drive sync copy (if connected) is not touched.')) return;
+  if(!confirm('Erase all data from this device? This cannot be undone. Your Drive sync copy (if connected) is not touched.')) return;
   await idClear('entries'); await idClear('expenses'); await idClear('photos'); await idClear('tombstones');
+  await idClear('vehicles'); await idClear('trips'); await idClear('tracks');
   await loadAll(); render(); toast('All data erased');
 }
 
@@ -953,6 +1400,15 @@ function unionById(localArr, remoteArr){
 function applyTombstones(arr, tsIds){
   return arr.filter(x=>!tsIds.has(x.id));
 }
+function mergeVehicles(localArr, remoteArr){
+  const map=new Map();
+  for(const x of localArr) map.set(x.id,x);
+  for(const x of remoteArr){
+    const cur=map.get(x.id);
+    if(!cur || (x.updatedAt||0) > (cur.updatedAt||0)) map.set(x.id,x);
+  }
+  return [...map.values()];
+}
 
 async function syncNow(interactive){
   if(!googleConnected && !interactive) return;
@@ -973,21 +1429,28 @@ async function syncNow(interactive){
     }
     const remote=await downloadRemote(fileId);
     const remoteEntries=remote?.entries||[], remoteExpenses=remote?.expenses||[], remotePhotos=remote?.photos||[], remoteTombstones=remote?.tombstones||[];
+    const remoteVehicles=remote?.vehicles||[], remoteTrips=remote?.trips||[], remoteTracks=remote?.tracks||[];
 
     const mergedTombstones=unionById(tombstones, remoteTombstones);
     const tsIds=new Set(mergedTombstones.map(t=>t.id));
     const mergedEntries=applyTombstones(unionById(entries, remoteEntries), tsIds);
     const mergedExpenses=applyTombstones(unionById(expenses, remoteExpenses), tsIds);
     const mergedPhotos=applyTombstones(unionById(photos, remotePhotos), tsIds);
+    const mergedTrips=applyTombstones(unionById(trips, remoteTrips), tsIds);
+    const mergedTracks=applyTombstones(unionById(tracks, remoteTracks), tsIds);
+    const mergedVehicles=mergeVehicles(vehicles, remoteVehicles);
 
     await idClear('entries'); for(const x of mergedEntries) await idPut('entries',x);
     await idClear('expenses'); for(const x of mergedExpenses) await idPut('expenses',x);
     await idClear('photos'); for(const x of mergedPhotos) await idPut('photos',x);
     await idClear('tombstones'); for(const x of mergedTombstones) await idPut('tombstones',x);
+    await idClear('vehicles'); for(const x of mergedVehicles) await idPut('vehicles',x);
+    await idClear('trips'); for(const x of mergedTrips) await idPut('trips',x);
+    await idClear('tracks'); for(const x of mergedTracks) await idPut('tracks',x);
     await loadAll();
     render();
 
-    const newFileId=await uploadRemote(fileId, {entries:mergedEntries, expenses:mergedExpenses, photos:mergedPhotos, tombstones:mergedTombstones, updatedAt:Date.now()});
+    const newFileId=await uploadRemote(fileId, {entries:mergedEntries, expenses:mergedExpenses, photos:mergedPhotos, tombstones:mergedTombstones, vehicles:mergedVehicles, trips:mergedTrips, tracks:mergedTracks, updatedAt:Date.now()});
     if(!syncFileId) syncFileId=newFileId;
 
     lastSyncAt=Date.now();
@@ -995,7 +1458,7 @@ async function syncNow(interactive){
     googleConnected=true;
     localStorage.setItem('rb_googleConnected','1');
     setSyncStatus('');
-    if(activeTab==='data') renderData(document.getElementById('main'));
+    if(activeTab==='more' && moreView==='backup') renderBackup(document.getElementById('main'));
   }catch(err){
     setSyncStatus('');
     if(interactive) toast('Sync failed — check connection or reconnect');
@@ -1025,7 +1488,7 @@ async function connectGoogle(){
     setSyncStatus('');
     toast('Could not connect Google account');
   }
-  if(activeTab==='data') renderData(document.getElementById('main'));
+  if(activeTab==='more' && moreView==='backup') renderBackup(document.getElementById('main'));
 }
 function disconnectGoogle(){
   if(!confirm('Disconnect Google account? Your data on this device is kept — you can reconnect any time.')) return;
@@ -1037,16 +1500,16 @@ function disconnectGoogle(){
   localStorage.removeItem('rb_syncFileId');
   localStorage.removeItem('rb_lastSyncAt');
   toast('Google account disconnected');
-  if(activeTab==='data') renderData(document.getElementById('main'));
+  if(activeTab==='more' && moreView==='backup') renderBackup(document.getElementById('main'));
 }
 
 /* ---------- tabs ---------- */
 function setActiveTabUI(){
   document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.toggle('active',b.dataset.tab===activeTab));
-  document.getElementById('fab').style.display = activeTab==='data' ? 'none':'flex';
+  updateFabVisibility();
 }
 document.querySelectorAll('nav.tabs button').forEach(b=>{
-  b.addEventListener('click',()=>{ activeTab=b.dataset.tab; setActiveTabUI(); render(); });
+  b.addEventListener('click',()=>{ activeTab=b.dataset.tab; if(activeTab!=='more') moreView=null; setActiveTabUI(); render(); });
 });
 
 /* ---------- boot ---------- */
