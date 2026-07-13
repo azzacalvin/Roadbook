@@ -1588,7 +1588,7 @@ function openTripDetail(id){
     </div>`;
   mountTripMapWidget(t);
   mountOfflineMapSection(t);
-  document.getElementById('importEmailBtn').onclick=()=>openEmailImportSheet(t.id);
+  document.getElementById('importEmailBtn').onclick=()=>{ closeSheets(); openEmailImportSheet(t.id); };
   if(mapsLink) document.getElementById('openMapsBtn').onclick=()=>window.open(mapsLink,'_blank');
   document.querySelectorAll('[data-open-track-from-trip]').forEach(el=>{
     el.addEventListener('click',(e)=>{
