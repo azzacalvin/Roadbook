@@ -210,6 +210,8 @@
     font-size:12.5px; cursor:pointer; color:var(--ink); font-family:inherit; text-align:left;
   }
   .geobtn.got, .photobtn.got{border-style:solid; background:var(--card);}
+  .photobtn-row{display:flex; gap:8px;}
+  .photobtn-row .photobtn{width:auto; flex:1;}
   .geo-readout{font-family:ui-monospace,monospace; font-size:11px; color:var(--ink-soft); margin-top:4px;}
 
   .thumbrow{display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;}
@@ -325,8 +327,12 @@
   </div>
   <div class="field">
     <label>Photos</label>
-    <button class="photobtn" id="logPhotoBtn">📷 Add photo</button>
-    <input type="file" id="logPhotoInput" accept="image/*" capture="environment" multiple>
+    <div class="photobtn-row">
+      <button class="photobtn" id="logPhotoCameraBtn">📷 Take photo</button>
+      <button class="photobtn" id="logPhotoGalleryBtn">🖼️ From gallery</button>
+    </div>
+    <input type="file" id="logPhotoInputCamera" accept="image/*" capture="environment">
+    <input type="file" id="logPhotoInputGallery" accept="image/*" multiple>
     <div class="thumbrow" id="logThumbs"></div>
   </div>
   <div class="actions">
@@ -382,8 +388,12 @@
   </div>
   <div class="field">
     <label>Photos</label>
-    <button class="photobtn" id="spendPhotoBtn">📷 Add photo</button>
-    <input type="file" id="spendPhotoInput" accept="image/*" multiple>
+    <div class="photobtn-row">
+      <button class="photobtn" id="spendPhotoCameraBtn">📷 Take photo</button>
+      <button class="photobtn" id="spendPhotoGalleryBtn">🖼️ From gallery</button>
+    </div>
+    <input type="file" id="spendPhotoInputCamera" accept="image/*" capture="environment">
+    <input type="file" id="spendPhotoInputGallery" accept="image/*" multiple>
     <div class="thumbrow" id="spendThumbs"></div>
     <button class="photobtn" id="spendScanBtn" style="margin-top:6px;">🧾 Scan receipt for details</button>
   </div>
@@ -2034,8 +2044,9 @@ document.querySelectorAll('#typeGrid button').forEach(b=>{
   });
 });
 document.getElementById('logGeoBtn').addEventListener('click',()=>captureGeo('log'));
-document.getElementById('logPhotoBtn').addEventListener('click',()=>document.getElementById('logPhotoInput').click());
-document.getElementById('logPhotoInput').addEventListener('change',async e=>{
+document.getElementById('logPhotoCameraBtn').addEventListener('click',()=>document.getElementById('logPhotoInputCamera').click());
+document.getElementById('logPhotoGalleryBtn').addEventListener('click',()=>document.getElementById('logPhotoInputGallery').click());
+async function handleLogPhotoFiles(e){
   for(const file of e.target.files){
     const dataUrl=await resizeImage(file);
     const pid=newId();
@@ -2043,10 +2054,14 @@ document.getElementById('logPhotoInput').addEventListener('change',async e=>{
   }
   renderPendingThumbs();
   e.target.value='';
-});
+}
+document.getElementById('logPhotoInputCamera').addEventListener('change',handleLogPhotoFiles);
+document.getElementById('logPhotoInputGallery').addEventListener('change',handleLogPhotoFiles);
 function renderPendingThumbs(){
   document.getElementById('logThumbs').innerHTML=pendingPhotos.map(p=>`<div class="t"><img src="${p.dataUrl}"></div>`).join('');
-  document.getElementById('logPhotoBtn').classList.toggle('got',pendingPhotos.length>0);
+  const got=pendingPhotos.length>0;
+  document.getElementById('logPhotoCameraBtn').classList.toggle('got',got);
+  document.getElementById('logPhotoGalleryBtn').classList.toggle('got',got);
 }
 document.getElementById('logSave').addEventListener('click',async()=>{
   const type=document.querySelector('#typeGrid button.selected').dataset.type;
@@ -2077,7 +2092,8 @@ function openSpendSheet(){
   document.getElementById('spendGeoBtn').textContent='📍 Capture current location';
   pendingGeo.spend=null; pendingPhotos=[];
   document.getElementById('spendThumbs').innerHTML='';
-  document.getElementById('spendPhotoBtn').classList.remove('got');
+  document.getElementById('spendPhotoCameraBtn').classList.remove('got');
+  document.getElementById('spendPhotoGalleryBtn').classList.remove('got');
   document.querySelectorAll('#catGrid button').forEach(b=>b.classList.toggle('selected',b.dataset.cat==='Fuel'));
   updateSpendCategoryFields('Fuel');
   openSheet('sheetSpend');
@@ -2090,8 +2106,9 @@ document.querySelectorAll('#catGrid button').forEach(b=>{
   });
 });
 document.getElementById('spendGeoBtn').addEventListener('click',()=>captureGeo('spend'));
-document.getElementById('spendPhotoBtn').addEventListener('click',()=>document.getElementById('spendPhotoInput').click());
-document.getElementById('spendPhotoInput').addEventListener('change',async e=>{
+document.getElementById('spendPhotoCameraBtn').addEventListener('click',()=>document.getElementById('spendPhotoInputCamera').click());
+document.getElementById('spendPhotoGalleryBtn').addEventListener('click',()=>document.getElementById('spendPhotoInputGallery').click());
+async function handleSpendPhotoFiles(e){
   for(const file of e.target.files){
     const dataUrl=await resizeImage(file);
     const scanUrl=await resizeImageForScan(file);
@@ -2100,8 +2117,12 @@ document.getElementById('spendPhotoInput').addEventListener('change',async e=>{
   }
   e.target.value='';
   document.getElementById('spendThumbs').innerHTML=pendingPhotos.map(p=>`<div class="t"><img src="${p.dataUrl}"></div>`).join('');
-  document.getElementById('spendPhotoBtn').classList.toggle('got',pendingPhotos.length>0);
-});
+  const got=pendingPhotos.length>0;
+  document.getElementById('spendPhotoCameraBtn').classList.toggle('got',got);
+  document.getElementById('spendPhotoGalleryBtn').classList.toggle('got',got);
+}
+document.getElementById('spendPhotoInputCamera').addEventListener('change',handleSpendPhotoFiles);
+document.getElementById('spendPhotoInputGallery').addEventListener('change',handleSpendPhotoFiles);
 document.getElementById('spendScanBtn').addEventListener('click', async()=>{
   if(!pendingPhotos.length){ toast('Add a photo of the receipt first'); return; }
   if(!RECEIPT_SCAN_WORKER_URL){ toast('Receipt scan needs a one-time setup step first'); return; }
