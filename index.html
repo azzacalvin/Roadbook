@@ -354,6 +354,14 @@
     <input type="number" id="spendAmount" inputmode="decimal" step="0.01" placeholder="0.00">
   </div>
   <div class="field">
+    <label>Litres</label>
+    <input type="number" id="spendLitres" inputmode="decimal" step="0.01" placeholder="optional">
+  </div>
+  <div class="field">
+    <label>Fuel type</label>
+    <input type="text" id="spendFuelType" placeholder="optional — e.g. Diesel, Unleaded 91">
+  </div>
+  <div class="field">
     <label>Odometer (km)</label>
     <input type="number" id="spendOdo" inputmode="numeric" placeholder="optional">
   </div>
@@ -371,6 +379,7 @@
     <button class="photobtn" id="spendPhotoBtn">📷 Add photo</button>
     <input type="file" id="spendPhotoInput" accept="image/*" capture="environment" multiple>
     <div class="thumbrow" id="spendThumbs"></div>
+    <button class="photobtn" id="spendScanBtn" style="margin-top:6px;">🧾 Scan receipt for details</button>
   </div>
   <div class="actions">
     <button class="btn ghost" data-close>Cancel</button>
@@ -758,8 +767,9 @@ function renderSpend(main){
     expenses.map(e=>{
       const loc = e.place ? e.place : (e.lat!=null ? `${e.lat.toFixed(4)}, ${e.lon.toFixed(4)}` : '');
       const odo = e.odo ? 'Odo '+e.odo+'km' : '';
+      const fuel = [e.litres?e.litres+'L':'', e.fuelType||''].filter(Boolean).join(' ');
       const photoCount = (e.photoIds||[]).length;
-      const meta=[odo,loc,photoCount?photoCount+' photo'+(photoCount>1?'s':''):''].filter(Boolean).join(' · ');
+      const meta=[fuel,odo,loc,photoCount?photoCount+' photo'+(photoCount>1?'s':''):''].filter(Boolean).join(' · ');
       return `<div class="row" data-open-expense="${e.id}">
         <div class="tag" style="background:${catColor(e.category)}"></div>
         <div class="body">
@@ -1732,6 +1742,7 @@ function openExpenseDetail(id){
     <h2 style="color:${catColor(e.category)}">${e.category}</h2>
     <div class="meta" style="margin:8px 0;">${fmtDate(e.ts)}</div>
     <p style="font-size:22px; font-family:ui-monospace,monospace; font-weight:800;">$${parseFloat(e.amount).toFixed(2)}</p>
+    ${(e.litres||e.fuelType)?`<div class="meta">${[e.litres?e.litres+' L':'', e.fuelType||''].filter(Boolean).join(' · ')}</div>`:''}
     ${e.odo?`<div class="meta">Odometer: ${e.odo} km</div>`:''}
     ${e.note?`<p style="font-size:14px;">${escapeHtml(e.note)}</p>`:''}
     ${e.place?`<div class="geo-readout">📍 ${escapeHtml(e.place)}</div>`:(e.lat!=null?`<div class="geo-readout">📍 ${e.lat.toFixed(5)}, ${e.lon.toFixed(5)}</div>`:'')}
@@ -1775,6 +1786,7 @@ function openPhotoDetail(id){
 const LINK_PREVIEW_WORKER_URL = '';
 const POLARSTEPS_WORKER_URL = 'https://roadbook-polarsteps.azzacalvin.workers.dev';
 const EMAIL_IMPORT_WORKER_URL = 'https://roadbook-email-import-workerjs.azzacalvin.workers.dev';
+const RECEIPT_SCAN_WORKER_URL = EMAIL_IMPORT_WORKER_URL; // same free Worker, different request shape
 function parsePolarstepsUrl(url){
   if(!url) return null;
   try{
@@ -2041,6 +2053,8 @@ document.getElementById('logSave').addEventListener('click',async()=>{
 
 function openSpendSheet(){
   document.getElementById('spendAmount').value='';
+  document.getElementById('spendLitres').value='';
+  document.getElementById('spendFuelType').value='';
   document.getElementById('spendOdo').value='';
   document.getElementById('spendNote').value='';
   document.getElementById('spendGeoReadout').textContent='';
@@ -2070,14 +2084,46 @@ document.getElementById('spendPhotoInput').addEventListener('change',async e=>{
   document.getElementById('spendThumbs').innerHTML=pendingPhotos.map(p=>`<div class="t"><img src="${p.dataUrl}"></div>`).join('');
   document.getElementById('spendPhotoBtn').classList.toggle('got',pendingPhotos.length>0);
 });
+document.getElementById('spendScanBtn').addEventListener('click', async()=>{
+  if(!pendingPhotos.length){ toast('Add a photo of the receipt first'); return; }
+  if(!RECEIPT_SCAN_WORKER_URL){ toast('Receipt scan needs a one-time setup step first'); return; }
+  const btn=document.getElementById('spendScanBtn');
+  btn.disabled=true; btn.textContent='Scanning…';
+  try{
+    const image=pendingPhotos[pendingPhotos.length-1].dataUrl;
+    const resp=await withTimeout(fetch(RECEIPT_SCAN_WORKER_URL, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({image})}), 25000);
+    const data=await resp.json();
+    if(!resp.ok || data.error){ toast('Could not read the receipt — '+(data.error||'try again')); btn.disabled=false; btn.textContent='🧾 Scan receipt for details'; return; }
+    let found=[];
+    if(data.amount!=null){ document.getElementById('spendAmount').value=data.amount; found.push('amount'); }
+    if(data.litres!=null){ document.getElementById('spendLitres').value=data.litres; found.push('litres'); }
+    if(data.fuelType){ document.getElementById('spendFuelType').value=data.fuelType; found.push('fuel type'); }
+    if(data.servoName){
+      document.querySelectorAll('#catGrid button').forEach(x=>x.classList.remove('selected'));
+      document.querySelector('#catGrid button[data-cat="Fuel"]').classList.add('selected');
+      pendingGeo.spend = pendingGeo.spend || {};
+      pendingGeo.spend.place = data.servoName;
+      const readout=document.getElementById('spendGeoReadout');
+      readout.innerHTML = `<strong>${escapeHtml(data.servoName)}</strong>`+(data.address?`<br>${escapeHtml(data.address)}`:'');
+      document.getElementById('spendGeoBtn').classList.add('got');
+      found.push('servo');
+    }
+    toast(found.length ? 'Filled in from receipt: '+found.join(', ') : 'Could not read details off that receipt');
+  }catch(err){
+    toast('Could not reach the receipt-scan worker — check your connection');
+  }
+  btn.disabled=false; btn.textContent='🧾 Scan receipt for details';
+});
 document.getElementById('spendSave').addEventListener('click',async()=>{
   const category=document.querySelector('#catGrid button.selected').dataset.cat;
   const amount=parseFloat(document.getElementById('spendAmount').value);
   if(!amount || amount<=0){toast('Enter an amount'); return;}
+  const litres=document.getElementById('spendLitres').value;
+  const fuelType=document.getElementById('spendFuelType').value.trim();
   const odo=document.getElementById('spendOdo').value;
   const note=document.getElementById('spendNote').value.trim();
   const geo=pendingGeo.spend;
-  const expense={id:newId(), ts:Date.now(), category, amount, odo:odo?parseFloat(odo):null, note, lat:geo?geo.lat:null, lon:geo?geo.lon:null, place:geo&&geo.place?geo.place:null, photoIds:pendingPhotos.map(p=>p.id)};
+  const expense={id:newId(), ts:Date.now(), category, amount, litres:litres?parseFloat(litres):null, fuelType:fuelType||null, odo:odo?parseFloat(odo):null, note, lat:geo?geo.lat:null, lon:geo?geo.lon:null, place:geo&&geo.place?geo.place:null, photoIds:pendingPhotos.map(p=>p.id)};
   await idPut('expenses',expense);
   for(const p of pendingPhotos) await idPut('photos',p);
   await loadAll(); closeSheets(); activeTab='more'; moreView='spend'; setActiveTabUI(); render(); toast('Expense saved'); scheduleSync();
