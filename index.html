@@ -451,7 +451,7 @@
 
 <script>
 /* ---------- storage ---------- */
-const DB_NAME='roadbook', DB_VER=3;
+const DB_NAME='roadbook', DB_VER=4;
 let db;
 function openDB(){
   return new Promise((res,rej)=>{
@@ -465,6 +465,8 @@ function openDB(){
       if(!d.objectStoreNames.contains('vehicles')) d.createObjectStore('vehicles',{keyPath:'id'});
       if(!d.objectStoreNames.contains('trips')) d.createObjectStore('trips',{keyPath:'id'});
       if(!d.objectStoreNames.contains('tracks')) d.createObjectStore('tracks',{keyPath:'id'});
+      if(!d.objectStoreNames.contains('mapTiles')) d.createObjectStore('mapTiles',{keyPath:'id'});
+      if(!d.objectStoreNames.contains('mapDownloads')) d.createObjectStore('mapDownloads',{keyPath:'id'});
     };
     r.onblocked=()=>{
       showDbBlockedMessage();
@@ -907,17 +909,29 @@ function lm_render(state){
   state.topLeftX=topLeftX; state.topLeftY=topLeftY; state.renderZoom=z;
   const xStart=Math.floor(topLeftX/256)-1, xEnd=Math.floor((topLeftX+state.width)/256)+1;
   const yStart=Math.floor(topLeftY/256)-1, yEnd=Math.floor((topLeftY+state.height)/256)+1;
-  let html='';
+  state.tilesEl.style.transform='';
+  (state._tileUrls||[]).forEach(u=>URL.revokeObjectURL(u));
+  state._tileUrls=[];
+  state.tilesEl.innerHTML='';
+  const renderToken=(state._renderToken=(state._renderToken||0)+1);
   for(let ty=yStart; ty<=yEnd; ty++){
     if(ty<0||ty>=n) continue;
     for(let tx=xStart; tx<=xEnd; tx++){
       const txw=((tx%n)+n)%n;
       const left=(tx*256-topLeftX).toFixed(1), top=(ty*256-topLeftY).toFixed(1);
-      html+=`<img src="https://tile.openstreetmap.org/${z}/${txw}/${ty}.png" style="position:absolute; left:${left}px; top:${top}px; width:256px; height:256px;" draggable="false" loading="lazy">`;
+      const img=document.createElement('img');
+      img.style.cssText=`position:absolute; left:${left}px; top:${top}px; width:256px; height:256px;`;
+      img.draggable=false; img.loading='lazy';
+      img.src=`https://tile.openstreetmap.org/${z}/${txw}/${ty}.png`;
+      state.tilesEl.appendChild(img);
+      getCachedTileBlob(z,txw,ty).then(blob=>{
+        if(!blob || state._renderToken!==renderToken) return;
+        const url=URL.createObjectURL(blob);
+        state._tileUrls.push(url);
+        img.src=url;
+      });
     }
   }
-  state.tilesEl.style.transform='';
-  state.tilesEl.innerHTML=html;
   lm_drawOverlay(state);
 }
 function lm_drawOverlay(state){
@@ -1088,6 +1102,172 @@ function mountTripMapWidget(t){
   const {lineGroups,pinGroups}=tripMapGroups(t, 'var(--terracotta)');
   initLiveMap(mapId, lineGroups, pinGroups);
 }
+/* ---------- offline map downloads (cached OSM tiles per trip) ---------- */
+const OFFLINE_ZMIN=9, OFFLINE_ZMAX=16;
+function tileKey(z,x,y){ return z+'_'+x+'_'+y; }
+function offlineBufferForZoom(z){
+  if(z<=10) return 1;
+  if(z<=15) return 2;
+  return 1;
+}
+function computeCorridorTiles(lineGroups, pinGroups, zMin, zMax){
+  const tileSet=new Set();
+  const list=[];
+  function addTile(z,x,y,buf){
+    const n=Math.pow(2,z);
+    for(let dx=-buf; dx<=buf; dx++){
+      for(let dy=-buf; dy<=buf; dy++){
+        const xx=((x+dx)%n+n)%n, yy=y+dy;
+        if(yy<0||yy>=n) continue;
+        const key=tileKey(z,xx,yy);
+        if(!tileSet.has(key)){ tileSet.add(key); list.push({z,x:xx,y:yy}); }
+      }
+    }
+  }
+  for(let z=zMin; z<=zMax; z++){
+    const buf=offlineBufferForZoom(z);
+    const tk=40075/Math.pow(2,z);
+    lineGroups.forEach(g=>{
+      const pts=g.points;
+      if(pts.length===1){
+        const x=Math.floor(lm_lonToWorldX(pts[0].lon,z)/256), y=Math.floor(lm_latToWorldY(pts[0].lat,z)/256);
+        addTile(z,x,y,buf);
+        return;
+      }
+      for(let i=0;i<pts.length-1;i++){
+        const p1=pts[i], p2=pts[i+1];
+        const distKm=haversine(p1.lat,p1.lon,p2.lat,p2.lon);
+        const steps=Math.max(1, Math.ceil(distKm/(tk*0.8)));
+        for(let s=0; s<=steps; s++){
+          const f=s/steps;
+          const lat=p1.lat+(p2.lat-p1.lat)*f, lon=p1.lon+(p2.lon-p1.lon)*f;
+          const x=Math.floor(lm_lonToWorldX(lon,z)/256), y=Math.floor(lm_latToWorldY(lat,z)/256);
+          addTile(z,x,y,buf);
+        }
+      }
+    });
+    pinGroups.forEach(p=>{
+      const x=Math.floor(lm_lonToWorldX(p.lon,z)/256), y=Math.floor(lm_latToWorldY(p.lat,z)/256);
+      addTile(z,x,y,buf);
+    });
+  }
+  return list;
+}
+function tripOfflineTileList(t){
+  const {lineGroups,pinGroups}=tripMapGroups(t, 'x');
+  return computeCorridorTiles(lineGroups, pinGroups, OFFLINE_ZMIN, OFFLINE_ZMAX);
+}
+async function getMapDownloadForTrip(tripId){
+  const all=await idAll('mapDownloads');
+  return all.find(d=>d.tripId===tripId) || null;
+}
+async function getCachedTileBlob(z,x,y){
+  return new Promise(res=>{
+    const r=tx('mapTiles').get(tileKey(z,x,y));
+    r.onsuccess=()=>res(r.result ? r.result.blob : null);
+    r.onerror=()=>res(null);
+  });
+}
+async function downloadOfflineMapForTrip(t, onProgress){
+  const tiles=tripOfflineTileList(t);
+  const total=tiles.length;
+  let done=0, bytes=0, failed=0;
+  const CONCURRENCY=4;
+  let idx=0;
+  async function worker(){
+    while(idx<tiles.length){
+      const my=tiles[idx++];
+      const key=tileKey(my.z,my.x,my.y);
+      try{
+        const existing=await getCachedTileBlob(my.z,my.x,my.y);
+        if(existing){
+          bytes+=existing.size;
+        } else {
+          const resp=await fetch(`https://tile.openstreetmap.org/${my.z}/${my.x}/${my.y}.png`);
+          if(resp.ok){
+            const blob=await resp.blob();
+            await idPut('mapTiles', {id:key, z:my.z, x:my.x, y:my.y, blob, sizeBytes:blob.size, savedAt:Date.now()});
+            bytes+=blob.size;
+          } else {
+            failed++;
+          }
+        }
+      } catch(err){ failed++; }
+      done++;
+      if(onProgress) onProgress({done, total, bytes, failed});
+    }
+  }
+  await Promise.all(Array.from({length:Math.min(CONCURRENCY,tiles.length)}, worker));
+  const record={
+    id: newId(),
+    tripId: t.id,
+    tripName: t.name,
+    zMin: OFFLINE_ZMIN, zMax: OFFLINE_ZMAX,
+    tileKeys: tiles.map(tl=>tileKey(tl.z,tl.x,tl.y)),
+    tileCount: total,
+    sizeBytes: bytes,
+    createdAt: Date.now()
+  };
+  await idPut('mapDownloads', record);
+  return record;
+}
+async function deleteOfflineMap(downloadId){
+  const all=await idAll('mapDownloads');
+  const rec=all.find(d=>d.id===downloadId);
+  if(!rec) return;
+  const others=all.filter(d=>d.id!==downloadId);
+  const stillNeeded=new Set();
+  others.forEach(o=>(o.tileKeys||[]).forEach(k=>stillNeeded.add(k)));
+  for(const k of (rec.tileKeys||[])){
+    if(!stillNeeded.has(k)) await idDelete('mapTiles', k);
+  }
+  await idDelete('mapDownloads', downloadId);
+}
+function fmtBytes(b){
+  if(b==null) return '';
+  if(b<1024*1024) return (b/1024).toFixed(0)+' KB';
+  return (b/(1024*1024)).toFixed(0)+' MB';
+}
+
+async function mountOfflineMapSection(t){
+  const el=document.getElementById('offlineMapSection-'+t.id);
+  if(!el) return;
+  const existing=await getMapDownloadForTrip(t.id);
+  if(existing){
+    el.innerHTML=`<div class="meta">Downloaded for offline use · ${fmtBytes(existing.sizeBytes)} (${existing.tileCount} tiles)</div>
+      <button class="btn ghost" id="deleteOfflineMapBtn" style="width:100%; margin-top:6px;">Delete offline map</button>`;
+    document.getElementById('deleteOfflineMapBtn').onclick=async()=>{
+      if(!confirm('Delete the downloaded offline map for this trip? You can download it again anytime you have signal.')) return;
+      await deleteOfflineMap(existing.id);
+      toast('Offline map deleted');
+      mountOfflineMapSection(t);
+    };
+    return;
+  }
+  const tileList=tripOfflineTileList(t);
+  if(!tileList.length){
+    el.innerHTML=`<div class="meta">Add stops or a recorded route to this trip to enable an offline download.</div>`;
+    return;
+  }
+  const estMB=Math.max(1, Math.round(tileList.length*15/1024));
+  el.innerHTML=`<div class="meta">~${estMB} MB · ${tileList.length} map tiles · needs a connection to download, then works offline</div>
+    <button class="btn primary" id="downloadOfflineMapBtn" style="width:100%; margin-top:6px;">Download offline map</button>`;
+  document.getElementById('downloadOfflineMapBtn').onclick=async()=>{
+    const btn=document.getElementById('downloadOfflineMapBtn');
+    btn.disabled=true;
+    try{
+      await downloadOfflineMapForTrip(t, (p)=>{
+        const pct=Math.round(100*p.done/p.total);
+        btn.textContent=`Downloading… ${pct}% (${p.done}/${p.total})`;
+      });
+      toast('Offline map downloaded');
+    }catch(err){
+      toast('Download failed — check your connection and try again');
+    }
+    mountOfflineMapSection(t);
+  };
+}
+
 let _travelMapGroups=null;
 function renderTravelMap(){
   const sortedTrips=trips.slice().sort((a,b)=>(a.startDate||'').localeCompare(b.startDate||''));
@@ -1349,6 +1529,8 @@ function openTripDetail(id){
     <div class="meta" style="margin:8px 0;"><span class="badge ${t.status}">${t.status}</span> &nbsp; ${t.startDate?fmtDate(new Date(t.startDate).getTime()):''}${t.endDate?' – '+fmtDate(new Date(t.endDate).getTime()):''}</div>
     ${t.notes?`<p style="font-size:14px;">${escapeHtml(t.notes)}</p>`:''}
     ${renderTripMapWidget(t)}
+    <div class="sectitle" style="margin-top:14px;">Offline map</div>
+    <div id="offlineMapSection-${t.id}"><div class="meta">Checking…</div></div>
     <div class="sectitle" style="margin-top:14px;">Stops</div>
     ${(t.stops||[]).map((s,i)=>`<div class="stoplistitem"><span class="num">${i+1}.</span><span class="nm">${escapeHtml(s.name)}${s.lat!=null?' 📍':''}</span></div>`).join('') || '<div class="meta">No stops added</div>'}
     ${mapsLink?`<button class="btn primary" id="openMapsBtn" style="width:100%; margin-top:10px;">Open planned route in Google Maps</button>`:''}
@@ -1363,6 +1545,7 @@ function openTripDetail(id){
       <button class="btn danger" id="delTripBtn">Delete</button>
     </div>`;
   mountTripMapWidget(t);
+  mountOfflineMapSection(t);
   if(mapsLink) document.getElementById('openMapsBtn').onclick=()=>window.open(mapsLink,'_blank');
   document.querySelectorAll('[data-open-track-from-trip]').forEach(el=>{
     el.addEventListener('click',(e)=>{
