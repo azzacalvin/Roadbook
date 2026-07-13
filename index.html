@@ -366,6 +366,12 @@
     <button class="geobtn" id="spendGeoBtn">📍 Capture current location</button>
     <div class="geo-readout" id="spendGeoReadout"></div>
   </div>
+  <div class="field">
+    <label>Photos</label>
+    <button class="photobtn" id="spendPhotoBtn">📷 Add photo</button>
+    <input type="file" id="spendPhotoInput" accept="image/*" capture="environment" multiple>
+    <div class="thumbrow" id="spendThumbs"></div>
+  </div>
   <div class="actions">
     <button class="btn ghost" data-close>Cancel</button>
     <button class="btn primary" id="spendSave">Save expense</button>
@@ -716,9 +722,10 @@ function renderLog(main){
 function renderSpend(main){
   const list = !expenses.length ? '<div class="empty"><span class="t">No expenses yet</span>Tap + to log fuel, camp fees, food, or repairs.</div>' :
     expenses.map(e=>{
-      const loc = e.lat!=null ? `${e.lat.toFixed(4)}, ${e.lon.toFixed(4)}` : '';
+      const loc = e.place ? e.place : (e.lat!=null ? `${e.lat.toFixed(4)}, ${e.lon.toFixed(4)}` : '');
       const odo = e.odo ? 'Odo '+e.odo+'km' : '';
-      const meta=[odo,loc].filter(Boolean).join(' · ');
+      const photoCount = (e.photoIds||[]).length;
+      const meta=[odo,loc,photoCount?photoCount+' photo'+(photoCount>1?'s':''):''].filter(Boolean).join(' · ');
       return `<div class="row" data-open-expense="${e.id}">
         <div class="tag" style="background:${catColor(e.category)}"></div>
         <div class="body">
@@ -1684,13 +1691,15 @@ function openEntryDetail(id){
 }
 function openExpenseDetail(id){
   const e=expenses.find(x=>x.id===id); if(!e) return;
+  const pics=(e.photoIds||[]).map(pid=>photos.find(p=>p.id===pid)).filter(Boolean);
   document.getElementById('detailBody').innerHTML=`
     <h2 style="color:${catColor(e.category)}">${e.category}</h2>
     <div class="meta" style="margin:8px 0;">${fmtDate(e.ts)}</div>
     <p style="font-size:22px; font-family:ui-monospace,monospace; font-weight:800;">$${parseFloat(e.amount).toFixed(2)}</p>
     ${e.odo?`<div class="meta">Odometer: ${e.odo} km</div>`:''}
     ${e.note?`<p style="font-size:14px;">${escapeHtml(e.note)}</p>`:''}
-    ${e.lat!=null?`<div class="geo-readout">📍 ${e.lat.toFixed(5)}, ${e.lon.toFixed(5)}</div>`:''}
+    ${e.place?`<div class="geo-readout">📍 ${escapeHtml(e.place)}</div>`:(e.lat!=null?`<div class="geo-readout">📍 ${e.lat.toFixed(5)}, ${e.lon.toFixed(5)}</div>`:'')}
+    ${pics.length?`<div class="thumbrow" style="margin-top:12px;">${pics.map(p=>`<div class="t"><img src="${p.dataUrl}"></div>`).join('')}</div>`:''}
     <div class="actions">
       <button class="btn ghost" data-close>Close</button>
       <button class="btn danger" id="delExpense">Delete</button>
@@ -1698,6 +1707,10 @@ function openExpenseDetail(id){
   document.getElementById('delExpense').onclick=async()=>{
     await idDelete('expenses',id);
     await idPut('tombstones',{id, store:'expenses', deletedAt:Date.now()});
+    for(const pid of (e.photoIds||[])){
+      await idDelete('photos',pid);
+      await idPut('tombstones',{id:pid, store:'photos', deletedAt:Date.now()});
+    }
     await loadAll(); closeSheets(); render(); toast('Expense deleted'); scheduleSync();
   };
   openSheet('sheetDetail');
@@ -1716,6 +1729,8 @@ function openPhotoDetail(id){
     await idPut('tombstones',{id, store:'photos', deletedAt:Date.now()});
     const owner=entries.find(e=>(e.photoIds||[]).includes(id));
     if(owner){owner.photoIds=owner.photoIds.filter(x=>x!==id); await idPut('entries',owner);}
+    const ownerExp=expenses.find(x=>(x.photoIds||[]).includes(id));
+    if(ownerExp){ownerExp.photoIds=ownerExp.photoIds.filter(x=>x!==id); await idPut('expenses',ownerExp);}
     await loadAll(); closeSheets(); render(); toast('Photo deleted'); scheduleSync();
   };
   openSheet('sheetDetail');
@@ -1993,7 +2008,10 @@ function openSpendSheet(){
   document.getElementById('spendNote').value='';
   document.getElementById('spendGeoReadout').textContent='';
   document.getElementById('spendGeoBtn').classList.remove('got');
-  pendingGeo.spend=null;
+  document.getElementById('spendGeoBtn').textContent='📍 Capture current location';
+  pendingGeo.spend=null; pendingPhotos=[];
+  document.getElementById('spendThumbs').innerHTML='';
+  document.getElementById('spendPhotoBtn').classList.remove('got');
   document.querySelectorAll('#catGrid button').forEach(b=>b.classList.toggle('selected',b.dataset.cat==='Fuel'));
   openSheet('sheetSpend');
 }
@@ -2004,6 +2022,17 @@ document.querySelectorAll('#catGrid button').forEach(b=>{
   });
 });
 document.getElementById('spendGeoBtn').addEventListener('click',()=>captureGeo('spend'));
+document.getElementById('spendPhotoBtn').addEventListener('click',()=>document.getElementById('spendPhotoInput').click());
+document.getElementById('spendPhotoInput').addEventListener('change',async e=>{
+  for(const file of e.target.files){
+    const dataUrl=await resizeImage(file);
+    const pid=newId();
+    pendingPhotos.push({id:pid,dataUrl,ts:Date.now()});
+  }
+  e.target.value='';
+  document.getElementById('spendThumbs').innerHTML=pendingPhotos.map(p=>`<div class="t"><img src="${p.dataUrl}"></div>`).join('');
+  document.getElementById('spendPhotoBtn').classList.toggle('got',pendingPhotos.length>0);
+});
 document.getElementById('spendSave').addEventListener('click',async()=>{
   const category=document.querySelector('#catGrid button.selected').dataset.cat;
   const amount=parseFloat(document.getElementById('spendAmount').value);
@@ -2011,21 +2040,71 @@ document.getElementById('spendSave').addEventListener('click',async()=>{
   const odo=document.getElementById('spendOdo').value;
   const note=document.getElementById('spendNote').value.trim();
   const geo=pendingGeo.spend;
-  const expense={id:newId(), ts:Date.now(), category, amount, odo:odo?parseFloat(odo):null, note, lat:geo?geo.lat:null, lon:geo?geo.lon:null};
+  const expense={id:newId(), ts:Date.now(), category, amount, odo:odo?parseFloat(odo):null, note, lat:geo?geo.lat:null, lon:geo?geo.lon:null, place:geo&&geo.place?geo.place:null, photoIds:pendingPhotos.map(p=>p.id)};
   await idPut('expenses',expense);
+  for(const p of pendingPhotos) await idPut('photos',p);
   await loadAll(); closeSheets(); activeTab='more'; moreView='spend'; setActiveTabUI(); render(); toast('Expense saved'); scheduleSync();
 });
 
+const NEARBY_PLACE_TAGS={
+  'Camp fees': [['tourism','caravan_site'],['tourism','camp_site'],['tourism','camping']],
+  'Fuel': [['amenity','fuel']],
+  'Repairs': [['shop','car_repair'],['shop','car'],['craft','car_repair']],
+  'Food': [['amenity','restaurant'],['amenity','cafe'],['amenity','fast_food'],['amenity','pub']]
+};
+function withTimeout(promise, ms){
+  return Promise.race([promise, new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),ms))]);
+}
+async function lookupNearbyPlace(lat, lon, category){
+  const tags=NEARBY_PLACE_TAGS[category];
+  if(!tags) return null;
+  const radius=300;
+  const clauses=tags.map(([k,v])=>`node(around:${radius},${lat},${lon})["${k}"="${v}"];way(around:${radius},${lat},${lon})["${k}"="${v}"];`).join('');
+  const q=`[out:json][timeout:12];(${clauses});out center 10;`;
+  try{
+    const resp=await withTimeout(fetch('https://overpass-api.de/api/interpreter',{method:'POST', body:q}), 9000);
+    if(!resp.ok) return null;
+    const data=await resp.json();
+    const named=(data.elements||[]).filter(e=>e.tags && e.tags.name);
+    if(!named.length) return null;
+    let best=null, bestDist=Infinity;
+    named.forEach(e=>{
+      const elat=e.lat!=null?e.lat:(e.center?e.center.lat:null);
+      const elon=e.lon!=null?e.lon:(e.center?e.center.lon:null);
+      if(elat==null) return;
+      const d=haversine(lat,lon,elat,elon);
+      if(d<bestDist){ bestDist=d; best=e; }
+    });
+    return best ? best.tags.name : null;
+  }catch(err){ return null; }
+}
 function captureGeo(which){
   const btn=document.getElementById(which+'GeoBtn');
   const readout=document.getElementById(which+'GeoReadout');
   if(!navigator.geolocation){ readout.textContent='Location not available on this device.'; return; }
   btn.textContent='📍 Locating…';
-  navigator.geolocation.getCurrentPosition(pos=>{
-    pendingGeo[which]={lat:pos.coords.latitude, lon:pos.coords.longitude};
+  navigator.geolocation.getCurrentPosition(async pos=>{
+    const lat=pos.coords.latitude, lon=pos.coords.longitude;
+    pendingGeo[which]={lat, lon};
     btn.textContent='📍 Location captured';
     btn.classList.add('got');
-    readout.textContent=pos.coords.latitude.toFixed(5)+', '+pos.coords.longitude.toFixed(5)+' (±'+Math.round(pos.coords.accuracy)+'m)';
+    readout.textContent=lat.toFixed(5)+', '+lon.toFixed(5)+' (±'+Math.round(pos.coords.accuracy)+'m)';
+    if(which==='spend'){
+      const catBtn=document.querySelector('#catGrid button.selected');
+      const category=catBtn?catBtn.dataset.cat:null;
+      if(NEARBY_PLACE_TAGS[category]){
+        readout.textContent='Looking up nearby place…';
+        const place=await lookupNearbyPlace(lat,lon,category);
+        if(pendingGeo.spend && pendingGeo.spend.lat===lat && pendingGeo.spend.lon===lon){
+          if(place){
+            pendingGeo.spend.place=place;
+            readout.innerHTML=`<strong>${escapeHtml(place)}</strong><br>${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+          } else {
+            readout.textContent=lat.toFixed(5)+', '+lon.toFixed(5)+' (±'+Math.round(pos.coords.accuracy)+'m)';
+          }
+        }
+      }
+    }
   },err=>{
     btn.textContent='📍 Capture current location';
     readout.textContent='Could not get location — check permission, try again.';
