@@ -2131,7 +2131,7 @@ document.getElementById('spendScanBtn').addEventListener('click', async()=>{
   try{
     const lastPhoto=pendingPhotos[pendingPhotos.length-1];
     const image=lastPhoto.scanUrl||lastPhoto.dataUrl;
-    const resp=await withTimeout(fetch(RECEIPT_SCAN_WORKER_URL, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({image})}), 30000);
+    const resp=await withTimeout(fetch(RECEIPT_SCAN_WORKER_URL, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({image})}), 55000);
     const data=await resp.json();
     if(!resp.ok || data.error){ toast('Could not read the receipt — '+(data.error||'try again')); btn.disabled=false; btn.textContent='🧾 Scan receipt for details'; return; }
     let found=[];
