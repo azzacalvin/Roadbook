@@ -21,6 +21,7 @@
     --rust:#A8452A;
     --ochre:#D69A34;
     --eucalypt:#6B8552;
+    --plum:#7C5C7A;
     --line:#E3D2B4;
     --danger:#A8452A;
     --radius:14px;
@@ -497,7 +498,7 @@ function newId(){return Date.now().toString(36)+Math.random().toString(36).slice
 let entries=[], expenses=[], photos=[], tombstones=[], vehicles=[], trips=[], tracks=[];
 let activeTab='home';
 let moreView=null; // null | 'spend' | 'photos' | 'assistant' | 'backup' | 'travel'
-let allTravelMode='timeline'; // 'timeline' | 'bytrip'
+let allTravelMode='timeline'; // 'timeline' | 'bytrip' | 'map'
 let pendingGeo={log:null, spend:null, tripstop:null};
 let pendingPhotos=[];
 let pendingTripStops=[];
@@ -819,6 +820,103 @@ function wireBackRow(main){
   if(el) el.addEventListener('click',()=>{ moreView=null; setActiveTabUI(); render(); });
 }
 
+/* ---------- sketch map (offline, no tiles/keys/CDN) ---------- */
+function projectLatLon(points, w, h, pad){
+  let minLat=Infinity,maxLat=-Infinity,minLon=Infinity,maxLon=-Infinity;
+  points.forEach(p=>{
+    if(p.lat<minLat)minLat=p.lat; if(p.lat>maxLat)maxLat=p.lat;
+    if(p.lon<minLon)minLon=p.lon; if(p.lon>maxLon)maxLon=p.lon;
+  });
+  if(minLat===maxLat){minLat-=0.05;maxLat+=0.05;}
+  if(minLon===maxLon){minLon-=0.05;maxLon+=0.05;}
+  const latSpan=maxLat-minLat, lonSpan=maxLon-minLon;
+  return (lat,lon)=>{
+    const x=pad+((lon-minLon)/lonSpan)*(w-2*pad);
+    const y=pad+(1-(lat-minLat)/latSpan)*(h-2*pad);
+    return [x,y];
+  };
+}
+function buildSketchMapSvg(lineGroups, pinGroups){
+  const w=320,h=190,pad=18;
+  const allPts=[];
+  lineGroups.forEach(g=>g.points.forEach(p=>allPts.push(p)));
+  pinGroups.forEach(p=>allPts.push(p));
+  if(!allPts.length) return null;
+  const proj=projectLatLon(allPts,w,h,pad);
+  let svg=`<svg viewBox="0 0 ${w} ${h}" style="width:100%; height:auto; display:block;">`;
+  svg+=`<rect x="0" y="0" width="${w}" height="${h}" fill="var(--sand-dark)" rx="10"/>`;
+  for(let i=1;i<4;i++){
+    const gy=pad+(i*(h-2*pad)/4);
+    svg+=`<line x1="${pad}" y1="${gy.toFixed(1)}" x2="${w-pad}" y2="${gy.toFixed(1)}" stroke="var(--line)" stroke-width="1"/>`;
+  }
+  for(let i=1;i<5;i++){
+    const gx=pad+(i*(w-2*pad)/5);
+    svg+=`<line x1="${gx.toFixed(1)}" y1="${pad}" x2="${gx.toFixed(1)}" y2="${h-pad}" stroke="var(--line)" stroke-width="1"/>`;
+  }
+  lineGroups.forEach(g=>{
+    if(g.points.length<2) return;
+    const d=g.points.map(p=>{const xy=proj(p.lat,p.lon); return xy[0].toFixed(1)+','+xy[1].toFixed(1);}).join(' ');
+    svg+=`<polyline points="${d}" fill="none" stroke="${g.color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>`;
+  });
+  pinGroups.forEach(p=>{
+    const xy=proj(p.lat,p.lon);
+    svg+=`<circle cx="${xy[0].toFixed(1)}" cy="${xy[1].toFixed(1)}" r="${p.r||4}" fill="${p.color}" stroke="var(--card)" stroke-width="1.5"/>`;
+  });
+  svg+='</svg>';
+  return svg;
+}
+function tripColor(idx){
+  const palette=['var(--terracotta)','var(--eucalypt)','var(--rust)','var(--ochre)','var(--plum)'];
+  return palette[idx % palette.length];
+}
+function entriesForTripRange(t){
+  if(!t.startDate || !t.endDate) return [];
+  const startTs=new Date(t.startDate+'T00:00:00').getTime();
+  const endTs=new Date(t.endDate+'T23:59:59').getTime();
+  return entries.filter(e=>e.ts>=startTs && e.ts<=endTs);
+}
+function tripMapGroups(t, color){
+  const tTracks=tracks.filter(tr=>tr.tripId===t.id);
+  const tEntries=entriesForTripRange(t);
+  const lineGroups=tTracks.filter(tr=>tr.points&&tr.points.length>1).map(tr=>({points:tr.points, color}));
+  const pinGroups=[];
+  tTracks.filter(tr=>tr.linkLat!=null).forEach(tr=>pinGroups.push({lat:tr.linkLat, lon:tr.linkLon, color, r:5}));
+  tEntries.filter(e=>e.lat!=null).forEach(e=>pinGroups.push({lat:e.lat, lon:e.lon, color, r:3.5}));
+  return {lineGroups, pinGroups, tTracks, tEntries};
+}
+function renderTripMapWidget(t){
+  const {lineGroups,pinGroups}=tripMapGroups(t, 'var(--terracotta)');
+  const svg=buildSketchMapSvg(lineGroups,pinGroups);
+  if(!svg) return '';
+  return `<div class="sectitle" style="margin-top:14px;">Where you've been</div>
+    <div class="mapwidget" style="border:1px solid var(--line); border-radius:var(--radius-sm); overflow:hidden;">${svg}</div>`;
+}
+function renderTravelMap(){
+  const sortedTrips=trips.slice().sort((a,b)=>(a.startDate||'').localeCompare(b.startDate||''));
+  const lineGroups=[], pinGroups=[], legend=[];
+  const usedTrackIds=new Set(), usedEntryIds=new Set();
+  sortedTrips.forEach((t,i)=>{
+    const color=tripColor(i);
+    const {lineGroups:lg, pinGroups:pg, tTracks, tEntries}=tripMapGroups(t, color);
+    tTracks.forEach(tr=>usedTrackIds.add(tr.id));
+    tEntries.forEach(e=>usedEntryIds.add(e.id));
+    lineGroups.push(...lg); pinGroups.push(...pg);
+    if(tTracks.length||tEntries.length) legend.push({name:t.name,color});
+  });
+  const neutral='var(--ink-soft)';
+  const unassignedTracks=tracks.filter(tr=>!usedTrackIds.has(tr.id));
+  const unassignedEntries=entries.filter(e=>!usedEntryIds.has(e.id));
+  unassignedTracks.filter(tr=>tr.points&&tr.points.length>1).forEach(tr=>lineGroups.push({points:tr.points,color:neutral}));
+  unassignedTracks.filter(tr=>tr.linkLat!=null).forEach(tr=>pinGroups.push({lat:tr.linkLat,lon:tr.linkLon,color:neutral,r:5}));
+  unassignedEntries.filter(e=>e.lat!=null).forEach(e=>pinGroups.push({lat:e.lat,lon:e.lon,color:neutral,r:3.5}));
+  if(unassignedTracks.length||unassignedEntries.length) legend.push({name:'Unassigned',color:neutral});
+
+  const svg=buildSketchMapSvg(lineGroups,pinGroups);
+  if(!svg) return '<div class="empty"><span class="t">Nothing logged yet</span>Locations you log will plot here once you add stops or record a route.</div>';
+  const legendHtml=legend.length ? `<div class="maplegend" style="display:flex; flex-wrap:wrap; gap:10px; margin-top:10px;">${legend.map(l=>`<div style="display:flex; align-items:center; gap:5px; font-size:11px; color:var(--ink-soft);"><span style="width:9px;height:9px;border-radius:50%;background:${l.color};display:inline-block;"></span>${escapeHtml(l.name)}</div>`).join('')}</div>` : '';
+  return `<div class="mapwidget" style="border:1px solid var(--line); border-radius:var(--radius-sm); overflow:hidden;">${svg}</div>${legendHtml}`;
+}
+
 /* ---------- ALL TRAVEL (combined view) ---------- */
 function travelEntryRow(e){
   const loc = e.lat!=null ? `${e.lat.toFixed(4)}, ${e.lon.toFixed(4)}` : 'No location';
@@ -895,11 +993,12 @@ function wireTravelRowClicks(main){
   });
 }
 function renderAllTravel(main){
-  const toggle = `<div class="typegrid" style="grid-template-columns:repeat(2,1fr); margin-bottom:14px;" id="travelModeGrid">
+  const toggle = `<div class="typegrid" style="grid-template-columns:repeat(3,1fr); margin-bottom:14px;" id="travelModeGrid">
     <button data-mode="timeline" class="${allTravelMode==='timeline'?'selected':''}">Timeline</button>
     <button data-mode="bytrip" class="${allTravelMode==='bytrip'?'selected':''}">By Trip</button>
+    <button data-mode="map" class="${allTravelMode==='map'?'selected':''}">Map</button>
   </div>`;
-  const body = allTravelMode==='timeline' ? renderTravelTimeline() : renderTravelByTrip();
+  const body = allTravelMode==='timeline' ? renderTravelTimeline() : (allTravelMode==='bytrip' ? renderTravelByTrip() : renderTravelMap());
   main.innerHTML = backRow('More') + '<div class="sectitle">All Travel</div>' + toggle + body;
   wireBackRow(main);
   main.querySelectorAll('#travelModeGrid button').forEach(b=>{
@@ -1035,6 +1134,7 @@ function openTripDetail(id){
     <h2>${escapeHtml(t.name)}</h2>
     <div class="meta" style="margin:8px 0;"><span class="badge ${t.status}">${t.status}</span> &nbsp; ${t.startDate?fmtDate(new Date(t.startDate).getTime()):''}${t.endDate?' – '+fmtDate(new Date(t.endDate).getTime()):''}</div>
     ${t.notes?`<p style="font-size:14px;">${escapeHtml(t.notes)}</p>`:''}
+    ${renderTripMapWidget(t)}
     <div class="sectitle" style="margin-top:14px;">Stops</div>
     ${(t.stops||[]).map((s,i)=>`<div class="stoplistitem"><span class="num">${i+1}.</span><span class="nm">${escapeHtml(s.name)}${s.lat!=null?' 📍':''}</span></div>`).join('') || '<div class="meta">No stops added</div>'}
     ${mapsLink?`<button class="btn primary" id="openMapsBtn" style="width:100%; margin-top:10px;">Open planned route in Google Maps</button>`:''}
