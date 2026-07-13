@@ -350,24 +350,30 @@
     </div>
   </div>
   <div class="field">
+    <label>Title</label>
+    <input type="text" id="spendTitle" placeholder="e.g. Diesel — BP Forster">
+  </div>
+  <div class="field">
     <label>Amount ($)</label>
     <input type="number" id="spendAmount" inputmode="decimal" step="0.01" placeholder="0.00">
   </div>
-  <div class="field">
-    <label>Litres</label>
-    <input type="number" id="spendLitres" inputmode="decimal" step="0.01" placeholder="optional">
+  <div id="spendFuelFields">
+    <div class="field">
+      <label>Litres</label>
+      <input type="number" id="spendLitres" inputmode="decimal" step="0.01" placeholder="optional">
+    </div>
+    <div class="field">
+      <label>Fuel type</label>
+      <input type="text" id="spendFuelType" placeholder="optional — e.g. Diesel, Unleaded 91">
+    </div>
+    <div class="field">
+      <label>Odometer (km)</label>
+      <input type="number" id="spendOdo" inputmode="numeric" placeholder="optional">
+    </div>
   </div>
-  <div class="field">
-    <label>Fuel type</label>
-    <input type="text" id="spendFuelType" placeholder="optional — e.g. Diesel, Unleaded 91">
-  </div>
-  <div class="field">
-    <label>Odometer (km)</label>
-    <input type="number" id="spendOdo" inputmode="numeric" placeholder="optional">
-  </div>
-  <div class="field">
-    <label>Note</label>
-    <input type="text" id="spendNote" placeholder="optional">
+  <div class="field" id="spendNoteField">
+    <label id="spendNoteLabel">Invoice — what was fixed</label>
+    <textarea id="spendNote" placeholder="optional — list what was repaired"></textarea>
   </div>
   <div class="field">
     <label>Location</label>
@@ -377,7 +383,7 @@
   <div class="field">
     <label>Photos</label>
     <button class="photobtn" id="spendPhotoBtn">📷 Add photo</button>
-    <input type="file" id="spendPhotoInput" accept="image/*" capture="environment" multiple>
+    <input type="file" id="spendPhotoInput" accept="image/*" multiple>
     <div class="thumbrow" id="spendThumbs"></div>
     <button class="photobtn" id="spendScanBtn" style="margin-top:6px;">🧾 Scan receipt for details</button>
   </div>
@@ -777,7 +783,7 @@ function renderSpend(main){
             <span class="kind" style="color:${catColor(e.category)}">${e.category}</span>
             <span class="date">${fmtDate(e.ts)}</span>
           </div>
-          <div class="note">${escapeHtml(e.note||e.category)}</div>
+          <div class="note">${escapeHtml(e.title||e.category)}</div>
           ${meta?`<div class="meta">${meta}</div>`:''}
         </div>
         <div class="amount">$${parseFloat(e.amount).toFixed(2)}</div>
@@ -1740,11 +1746,12 @@ function openExpenseDetail(id){
   const pics=(e.photoIds||[]).map(pid=>photos.find(p=>p.id===pid)).filter(Boolean);
   document.getElementById('detailBody').innerHTML=`
     <h2 style="color:${catColor(e.category)}">${e.category}</h2>
+    ${e.title?`<div style="font-size:16px; font-weight:700; margin-top:2px;">${escapeHtml(e.title)}</div>`:''}
     <div class="meta" style="margin:8px 0;">${fmtDate(e.ts)}</div>
     <p style="font-size:22px; font-family:ui-monospace,monospace; font-weight:800;">$${parseFloat(e.amount).toFixed(2)}</p>
     ${(e.litres||e.fuelType)?`<div class="meta">${[e.litres?e.litres+' L':'', e.fuelType||''].filter(Boolean).join(' · ')}</div>`:''}
     ${e.odo?`<div class="meta">Odometer: ${e.odo} km</div>`:''}
-    ${e.note?`<p style="font-size:14px;">${escapeHtml(e.note)}</p>`:''}
+    ${e.note?`<p style="font-size:14px;"><strong>Invoice:</strong> ${escapeHtml(e.note)}</p>`:''}
     ${e.place?`<div class="geo-readout">📍 ${escapeHtml(e.place)}</div>`:(e.lat!=null?`<div class="geo-readout">📍 ${e.lat.toFixed(5)}, ${e.lon.toFixed(5)}</div>`:'')}
     ${pics.length?`<div class="thumbrow" style="margin-top:12px;">${pics.map(p=>`<div class="t"><img src="${p.dataUrl}"></div>`).join('')}</div>`:''}
     <div class="actions">
@@ -2051,7 +2058,15 @@ document.getElementById('logSave').addEventListener('click',async()=>{
   await loadAll(); closeSheets(); activeTab='log'; setActiveTabUI(); render(); toast('Stop saved'); scheduleSync();
 });
 
+function updateSpendCategoryFields(category){
+  const isFuel = category==='Fuel';
+  const isRepairs = category==='Repairs';
+  document.getElementById('spendFuelFields').style.display = isFuel ? '' : 'none';
+  document.getElementById('spendScanBtn').style.display = isFuel ? '' : 'none';
+  document.getElementById('spendNoteField').style.display = isRepairs ? '' : 'none';
+}
 function openSpendSheet(){
+  document.getElementById('spendTitle').value='';
   document.getElementById('spendAmount').value='';
   document.getElementById('spendLitres').value='';
   document.getElementById('spendFuelType').value='';
@@ -2064,12 +2079,14 @@ function openSpendSheet(){
   document.getElementById('spendThumbs').innerHTML='';
   document.getElementById('spendPhotoBtn').classList.remove('got');
   document.querySelectorAll('#catGrid button').forEach(b=>b.classList.toggle('selected',b.dataset.cat==='Fuel'));
+  updateSpendCategoryFields('Fuel');
   openSheet('sheetSpend');
 }
 document.querySelectorAll('#catGrid button').forEach(b=>{
   b.addEventListener('click',()=>{
     document.querySelectorAll('#catGrid button').forEach(x=>x.classList.remove('selected'));
     b.classList.add('selected');
+    updateSpendCategoryFields(b.dataset.cat);
   });
 });
 document.getElementById('spendGeoBtn').addEventListener('click',()=>captureGeo('spend'));
@@ -2077,8 +2094,9 @@ document.getElementById('spendPhotoBtn').addEventListener('click',()=>document.g
 document.getElementById('spendPhotoInput').addEventListener('change',async e=>{
   for(const file of e.target.files){
     const dataUrl=await resizeImage(file);
+    const scanUrl=await resizeImageForScan(file);
     const pid=newId();
-    pendingPhotos.push({id:pid,dataUrl,ts:Date.now()});
+    pendingPhotos.push({id:pid,dataUrl,scanUrl,ts:Date.now()});
   }
   e.target.value='';
   document.getElementById('spendThumbs').innerHTML=pendingPhotos.map(p=>`<div class="t"><img src="${p.dataUrl}"></div>`).join('');
@@ -2090,8 +2108,9 @@ document.getElementById('spendScanBtn').addEventListener('click', async()=>{
   const btn=document.getElementById('spendScanBtn');
   btn.disabled=true; btn.textContent='Scanning…';
   try{
-    const image=pendingPhotos[pendingPhotos.length-1].dataUrl;
-    const resp=await withTimeout(fetch(RECEIPT_SCAN_WORKER_URL, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({image})}), 25000);
+    const lastPhoto=pendingPhotos[pendingPhotos.length-1];
+    const image=lastPhoto.scanUrl||lastPhoto.dataUrl;
+    const resp=await withTimeout(fetch(RECEIPT_SCAN_WORKER_URL, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({image})}), 30000);
     const data=await resp.json();
     if(!resp.ok || data.error){ toast('Could not read the receipt — '+(data.error||'try again')); btn.disabled=false; btn.textContent='🧾 Scan receipt for details'; return; }
     let found=[];
@@ -2101,14 +2120,17 @@ document.getElementById('spendScanBtn').addEventListener('click', async()=>{
     if(data.servoName){
       document.querySelectorAll('#catGrid button').forEach(x=>x.classList.remove('selected'));
       document.querySelector('#catGrid button[data-cat="Fuel"]').classList.add('selected');
+      updateSpendCategoryFields('Fuel');
       pendingGeo.spend = pendingGeo.spend || {};
       pendingGeo.spend.place = data.servoName;
       const readout=document.getElementById('spendGeoReadout');
       readout.innerHTML = `<strong>${escapeHtml(data.servoName)}</strong>`+(data.address?`<br>${escapeHtml(data.address)}`:'');
       document.getElementById('spendGeoBtn').classList.add('got');
       found.push('servo');
+      const titleEl=document.getElementById('spendTitle');
+      if(!titleEl.value.trim()) titleEl.value=(data.fuelType?data.fuelType+' — ':'')+data.servoName;
     }
-    toast(found.length ? 'Filled in from receipt: '+found.join(', ') : 'Could not read details off that receipt');
+    toast(found.length ? 'Filled in from receipt: '+found.join(', ') : 'Could not read details off that receipt — try a clearer or better-lit photo');
   }catch(err){
     toast('Could not reach the receipt-scan worker — check your connection');
   }
@@ -2116,16 +2138,18 @@ document.getElementById('spendScanBtn').addEventListener('click', async()=>{
 });
 document.getElementById('spendSave').addEventListener('click',async()=>{
   const category=document.querySelector('#catGrid button.selected').dataset.cat;
+  const title=document.getElementById('spendTitle').value.trim();
   const amount=parseFloat(document.getElementById('spendAmount').value);
   if(!amount || amount<=0){toast('Enter an amount'); return;}
-  const litres=document.getElementById('spendLitres').value;
-  const fuelType=document.getElementById('spendFuelType').value.trim();
-  const odo=document.getElementById('spendOdo').value;
-  const note=document.getElementById('spendNote').value.trim();
+  const isFuel=category==='Fuel', isRepairs=category==='Repairs';
+  const litres=isFuel?document.getElementById('spendLitres').value:'';
+  const fuelType=isFuel?document.getElementById('spendFuelType').value.trim():'';
+  const odo=isFuel?document.getElementById('spendOdo').value:'';
+  const note=isRepairs?document.getElementById('spendNote').value.trim():'';
   const geo=pendingGeo.spend;
-  const expense={id:newId(), ts:Date.now(), category, amount, litres:litres?parseFloat(litres):null, fuelType:fuelType||null, odo:odo?parseFloat(odo):null, note, lat:geo?geo.lat:null, lon:geo?geo.lon:null, place:geo&&geo.place?geo.place:null, photoIds:pendingPhotos.map(p=>p.id)};
+  const expense={id:newId(), ts:Date.now(), category, title:title||null, amount, litres:litres?parseFloat(litres):null, fuelType:fuelType||null, odo:odo?parseFloat(odo):null, note, lat:geo?geo.lat:null, lon:geo?geo.lon:null, place:geo&&geo.place?geo.place:null, photoIds:pendingPhotos.map(p=>p.id)};
   await idPut('expenses',expense);
-  for(const p of pendingPhotos) await idPut('photos',p);
+  for(const p of pendingPhotos) await idPut('photos',{id:p.id, dataUrl:p.dataUrl, ts:p.ts});
   await loadAll(); closeSheets(); activeTab='more'; moreView='spend'; setActiveTabUI(); render(); toast('Expense saved'); scheduleSync();
 });
 
@@ -2278,6 +2302,26 @@ function resizeImage(file){
       canvas.width=w; canvas.height=h;
       canvas.getContext('2d').drawImage(img,0,0,w,h);
       resolve(canvas.toDataURL('image/jpeg',0.72));
+    }; img.src=e.target.result; };
+    reader.readAsDataURL(file);
+  });
+}
+
+// Higher-res, higher-quality version used only for sending a receipt photo to
+// the AI scanner — small/dense printed text needs more pixels and less JPEG
+// compression than the normal stored thumbnail to read reliably.
+function resizeImageForScan(file){
+  return new Promise(resolve=>{
+    const img=new Image();
+    const reader=new FileReader();
+    reader.onload=e=>{ img.onload=()=>{
+      const maxW=1600;
+      const scale=Math.min(1, maxW/img.width);
+      const w=Math.round(img.width*scale), h=Math.round(img.height*scale);
+      const canvas=document.createElement('canvas');
+      canvas.width=w; canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      resolve(canvas.toDataURL('image/jpeg',0.9));
     }; img.src=e.target.result; };
     reader.readAsDataURL(file);
   });
