@@ -934,7 +934,7 @@ function lm_drawOverlay(state){
     svg+=`<circle cx="${xy[0].toFixed(1)}" cy="${xy[1].toFixed(1)}" r="${p.r||4}" fill="${p.color}" stroke="#fff" stroke-width="1.5"/>`;
   });
   svg+='</svg>';
-  if(state.svgEl) state.svgEl.outerHTML=svg;
+  if(state.svgEl){ state.svgEl.outerHTML=svg; } else { state.container.insertAdjacentHTML('beforeend', svg); }
   state.svgEl=state.container.querySelector('svg');
 }
 function lm_commitPan(state, dx, dy){
