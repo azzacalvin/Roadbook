@@ -865,6 +865,195 @@ function buildSketchMapSvg(lineGroups, pinGroups){
   svg+='</svg>';
   return svg;
 }
+/* ---------- live map (real OSM tiles, pan/zoom, no library) ---------- */
+const LIVEMAP_MIN_ZOOM=2, LIVEMAP_MAX_ZOOM=17;
+const liveMapInstances={};
+function lm_lonToWorldX(lon,z){ return (lon+180)/360 * Math.pow(2,z) * 256; }
+function lm_latToWorldY(lat,z){
+  const rad = Math.max(Math.min(lat,85.05),-85.05)*Math.PI/180;
+  return (1 - Math.log(Math.tan(rad) + 1/Math.cos(rad))/Math.PI) / 2 * Math.pow(2,z) * 256;
+}
+function lm_worldXToLon(x,z){ return x/(Math.pow(2,z)*256)*360-180; }
+function lm_worldYToLat(y,z){
+  const n = Math.PI - 2*Math.PI*y/(Math.pow(2,z)*256);
+  return 180/Math.PI * Math.atan(0.5*(Math.exp(n)-Math.exp(-n)));
+}
+function lm_clampZoom(z){ return Math.max(LIVEMAP_MIN_ZOOM, Math.min(LIVEMAP_MAX_ZOOM, z)); }
+function lm_fitView(points, width, height){
+  let minLat=Infinity,maxLat=-Infinity,minLon=Infinity,maxLon=-Infinity;
+  points.forEach(p=>{
+    if(p.lat<minLat)minLat=p.lat; if(p.lat>maxLat)maxLat=p.lat;
+    if(p.lon<minLon)minLon=p.lon; if(p.lon>maxLon)maxLon=p.lon;
+  });
+  const centerLat=(minLat+maxLat)/2, centerLon=(minLon+maxLon)/2;
+  if(minLat===maxLat && minLon===maxLon){
+    return {lat:centerLat, lon:centerLon, zoom:14};
+  }
+  const pad=36;
+  let z=LIVEMAP_MAX_ZOOM;
+  for(; z>LIVEMAP_MIN_ZOOM; z--){
+    const xSpan=Math.abs(lm_lonToWorldX(maxLon,z)-lm_lonToWorldX(minLon,z));
+    const ySpan=Math.abs(lm_latToWorldY(minLat,z)-lm_latToWorldY(maxLat,z));
+    if(xSpan<=(width-2*pad) && ySpan<=(height-2*pad)) break;
+  }
+  return {lat:centerLat, lon:centerLon, zoom:z};
+}
+function lm_dist(a,b){ return Math.hypot(a.x-b.x, a.y-b.y); }
+function lm_render(state){
+  const z=Math.round(state.zoom);
+  const n=Math.pow(2,z);
+  const centerWX=lm_lonToWorldX(state.lon,z), centerWY=lm_latToWorldY(state.lat,z);
+  const topLeftX=centerWX-state.width/2, topLeftY=centerWY-state.height/2;
+  state.topLeftX=topLeftX; state.topLeftY=topLeftY; state.renderZoom=z;
+  const xStart=Math.floor(topLeftX/256)-1, xEnd=Math.floor((topLeftX+state.width)/256)+1;
+  const yStart=Math.floor(topLeftY/256)-1, yEnd=Math.floor((topLeftY+state.height)/256)+1;
+  let html='';
+  for(let ty=yStart; ty<=yEnd; ty++){
+    if(ty<0||ty>=n) continue;
+    for(let tx=xStart; tx<=xEnd; tx++){
+      const txw=((tx%n)+n)%n;
+      const left=(tx*256-topLeftX).toFixed(1), top=(ty*256-topLeftY).toFixed(1);
+      html+=`<img src="https://tile.openstreetmap.org/${z}/${txw}/${ty}.png" style="position:absolute; left:${left}px; top:${top}px; width:256px; height:256px;" draggable="false" loading="lazy">`;
+    }
+  }
+  state.tilesEl.style.transform='';
+  state.tilesEl.innerHTML=html;
+  lm_drawOverlay(state);
+}
+function lm_drawOverlay(state){
+  const z=state.renderZoom;
+  const toScreen=(lat,lon)=>[lm_lonToWorldX(lon,z)-state.topLeftX, lm_latToWorldY(lat,z)-state.topLeftY];
+  let svg=`<svg viewBox="0 0 ${state.width} ${state.height}" width="${state.width}" height="${state.height}" style="position:absolute; top:0; left:0; pointer-events:none;">`;
+  state.lineGroups.forEach(g=>{
+    if(g.points.length<2) return;
+    const d=g.points.map(p=>{const xy=toScreen(p.lat,p.lon); return xy[0].toFixed(1)+','+xy[1].toFixed(1);}).join(' ');
+    svg+=`<polyline points="${d}" fill="none" stroke="${g.color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.85" style="filter:drop-shadow(0 0 2px rgba(255,255,255,0.8));"/>`;
+  });
+  state.pinGroups.forEach(p=>{
+    const xy=toScreen(p.lat,p.lon);
+    svg+=`<circle cx="${xy[0].toFixed(1)}" cy="${xy[1].toFixed(1)}" r="${p.r||4}" fill="${p.color}" stroke="#fff" stroke-width="1.5"/>`;
+  });
+  svg+='</svg>';
+  if(state.svgEl) state.svgEl.outerHTML=svg;
+  state.svgEl=state.container.querySelector('svg');
+}
+function lm_commitPan(state, dx, dy){
+  const newCenterWX=state.topLeftX+state.width/2-dx;
+  const newCenterWY=state.topLeftY+state.height/2-dy;
+  state.lon=lm_worldXToLon(newCenterWX, state.renderZoom);
+  state.lat=lm_worldYToLat(newCenterWY, state.renderZoom);
+  lm_render(state);
+}
+function lm_zoomAtScreenPoint(state, screenX, screenY, delta){
+  const z=state.renderZoom;
+  const geoWX=state.topLeftX+screenX, geoWY=state.topLeftY+screenY;
+  const lat=lm_worldYToLat(geoWY,z), lon=lm_worldXToLon(geoWX,z);
+  const newZoom=lm_clampZoom(state.zoom+delta);
+  if(newZoom===state.zoom) return;
+  state.zoom=newZoom;
+  const nz=Math.round(newZoom);
+  const newGeoWX=lm_lonToWorldX(lon,nz), newGeoWY=lm_latToWorldY(lat,nz);
+  state.lon=lm_worldXToLon(newGeoWX-(screenX-state.width/2), nz);
+  state.lat=lm_worldYToLat(newGeoWY-(screenY-state.height/2), nz);
+  lm_render(state);
+}
+function initLiveMap(containerId, lineGroups, pinGroups){
+  const container=document.getElementById(containerId);
+  if(!container) return;
+  const allPts=[];
+  lineGroups.forEach(g=>g.points.forEach(p=>allPts.push(p)));
+  pinGroups.forEach(p=>allPts.push(p));
+  if(!allPts.length){ container.innerHTML='<div class="empty" style="padding:20px;"><span class="t">Nothing to show yet</span>Locations you log will plot here.</div>'; return; }
+  const rect=container.getBoundingClientRect();
+  const width=rect.width||320, height=rect.height||220;
+  const view=lm_fitView(allPts, width, height);
+  container.innerHTML=`<div class="livemap-tiles" style="position:absolute; inset:0; overflow:hidden;"></div>
+    <div class="livemap-zoom" style="position:absolute; right:8px; bottom:8px; display:flex; flex-direction:column; gap:4px; z-index:5;">
+      <button type="button" data-z="in" style="width:30px; height:30px; border-radius:6px; border:1px solid var(--line); background:var(--card); font-weight:800; font-size:16px;">+</button>
+      <button type="button" data-z="out" style="width:30px; height:30px; border-radius:6px; border:1px solid var(--line); background:var(--card); font-weight:800; font-size:16px;">−</button>
+    </div>
+    <div style="position:absolute; left:4px; bottom:2px; font-size:9px; color:var(--ink-soft); background:rgba(255,255,255,0.7); padding:1px 4px; border-radius:3px; z-index:5;">© OpenStreetMap contributors</div>`;
+  container.style.position='relative';
+  container.style.overflow='hidden';
+  container.style.touchAction='none';
+  container.style.background='#dde3e8';
+  const state={
+    container, tilesEl:container.querySelector('.livemap-tiles'), svgEl:null,
+    width, height, lat:view.lat, lon:view.lon, zoom:view.zoom,
+    lineGroups, pinGroups, pointers:new Map(), dragging:false
+  };
+  liveMapInstances[containerId]=state;
+  lm_render(state);
+
+  let dragOrigin=null, pinchStart=null;
+  container.addEventListener('pointerdown', e=>{
+    if(e.target.closest('[data-z]')) return;
+    container.setPointerCapture(e.pointerId);
+    state.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(state.pointers.size===1){
+      dragOrigin={x:e.clientX,y:e.clientY, topLeftX:state.topLeftX, topLeftY:state.topLeftY};
+      state.dragging=true;
+    } else if(state.pointers.size===2){
+      const pts=[...state.pointers.values()];
+      pinchStart={dist:lm_dist(pts[0],pts[1]), zoom:state.zoom, mid:{x:(pts[0].x+pts[1].x)/2,y:(pts[0].y+pts[1].y)/2}};
+      state.dragging=false;
+    }
+  });
+  container.addEventListener('pointermove', e=>{
+    if(!state.pointers.has(e.pointerId)) return;
+    state.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(state.pointers.size===1 && state.dragging && dragOrigin){
+      const dx=e.clientX-dragOrigin.x, dy=e.clientY-dragOrigin.y;
+      state.tilesEl.style.transform=`translate(${dx}px, ${dy}px)`;
+      if(state.svgEl) state.svgEl.style.transform=`translate(${dx}px, ${dy}px)`;
+    } else if(state.pointers.size===2 && pinchStart){
+      const pts=[...state.pointers.values()];
+      const dist=lm_dist(pts[0],pts[1]);
+      const ratio=dist/pinchStart.dist;
+      const scale=ratio;
+      const cx=pinchStart.mid.x - container.getBoundingClientRect().left;
+      const cy=pinchStart.mid.y - container.getBoundingClientRect().top;
+      state.tilesEl.style.transformOrigin=`${cx}px ${cy}px`;
+      state.tilesEl.style.transform=`scale(${scale})`;
+      if(state.svgEl){ state.svgEl.style.transformOrigin=`${cx}px ${cy}px`; state.svgEl.style.transform=`scale(${scale})`; }
+      state._pinchRatio=ratio;
+    }
+  });
+  function endInteraction(e){
+    if(state.pointers.has(e.pointerId)) state.pointers.delete(e.pointerId);
+    if(state.dragging && dragOrigin && state.pointers.size===0){
+      const dx=e.clientX-dragOrigin.x, dy=e.clientY-dragOrigin.y;
+      state.dragging=false; dragOrigin=null;
+      lm_commitPan(state, dx, dy);
+    } else if(pinchStart && state.pointers.size<2){
+      const ratio=state._pinchRatio||1;
+      const deltaZoom=Math.log2(ratio);
+      const cx=pinchStart.mid.x - container.getBoundingClientRect().left;
+      const cy=pinchStart.mid.y - container.getBoundingClientRect().top;
+      state.tilesEl.style.transform=''; state.tilesEl.style.transformOrigin='';
+      if(state.svgEl){ state.svgEl.style.transform=''; state.svgEl.style.transformOrigin=''; }
+      pinchStart=null; state._pinchRatio=1;
+      lm_zoomAtScreenPoint(state, cx, cy, Math.round(deltaZoom));
+    }
+  }
+  container.addEventListener('pointerup', endInteraction);
+  container.addEventListener('pointercancel', endInteraction);
+  container.addEventListener('wheel', e=>{
+    e.preventDefault();
+    const rect2=container.getBoundingClientRect();
+    lm_zoomAtScreenPoint(state, e.clientX-rect2.left, e.clientY-rect2.top, e.deltaY<0?1:-1);
+  }, {passive:false});
+  container.addEventListener('dblclick', e=>{
+    const rect2=container.getBoundingClientRect();
+    lm_zoomAtScreenPoint(state, e.clientX-rect2.left, e.clientY-rect2.top, 1);
+  });
+  container.querySelectorAll('[data-z]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      lm_zoomAtScreenPoint(state, state.width/2, state.height/2, btn.dataset.z==='in'?1:-1);
+    });
+  });
+}
+
 function tripColor(idx){
   const palette=['var(--terracotta)','var(--eucalypt)','var(--rust)','var(--ochre)','var(--plum)'];
   return palette[idx % palette.length];
@@ -887,11 +1076,19 @@ function tripMapGroups(t, color){
 }
 function renderTripMapWidget(t){
   const {lineGroups,pinGroups}=tripMapGroups(t, 'var(--terracotta)');
-  const svg=buildSketchMapSvg(lineGroups,pinGroups);
-  if(!svg) return '';
+  const allPts=[]; lineGroups.forEach(g=>g.points.forEach(p=>allPts.push(p))); pinGroups.forEach(p=>allPts.push(p));
+  if(!allPts.length) return '';
+  const mapId='livemap-trip-'+t.id;
   return `<div class="sectitle" style="margin-top:14px;">Where you've been</div>
-    <div class="mapwidget" style="border:1px solid var(--line); border-radius:var(--radius-sm); overflow:hidden;">${svg}</div>`;
+    <div id="${mapId}" class="mapwidget" style="border:1px solid var(--line); border-radius:var(--radius-sm); overflow:hidden; height:240px; position:relative;"></div>`;
 }
+function mountTripMapWidget(t){
+  const mapId='livemap-trip-'+t.id;
+  if(!document.getElementById(mapId)) return;
+  const {lineGroups,pinGroups}=tripMapGroups(t, 'var(--terracotta)');
+  initLiveMap(mapId, lineGroups, pinGroups);
+}
+let _travelMapGroups=null;
 function renderTravelMap(){
   const sortedTrips=trips.slice().sort((a,b)=>(a.startDate||'').localeCompare(b.startDate||''));
   const lineGroups=[], pinGroups=[], legend=[];
@@ -912,10 +1109,11 @@ function renderTravelMap(){
   unassignedEntries.filter(e=>e.lat!=null).forEach(e=>pinGroups.push({lat:e.lat,lon:e.lon,color:neutral,r:3.5}));
   if(unassignedTracks.length||unassignedEntries.length) legend.push({name:'Unassigned',color:neutral});
 
-  const svg=buildSketchMapSvg(lineGroups,pinGroups);
-  if(!svg) return '<div class="empty"><span class="t">Nothing logged yet</span>Locations you log will plot here once you add stops or record a route.</div>';
-  const legendHtml=legend.length ? `<div class="maplegend" style="display:flex; flex-wrap:wrap; gap:10px; margin-top:10px;">${legend.map(l=>`<div style="display:flex; align-items:center; gap:5px; font-size:11px; color:var(--ink-soft);"><span style="width:9px;height:9px;border-radius:50%;background:${l.color};display:inline-block;"></span>${escapeHtml(l.name)}</div>`).join('')}</div>` : '';
-  return `<div class="mapwidget" style="border:1px solid var(--line); border-radius:var(--radius-sm); overflow:hidden;">${svg}</div>${legendHtml}`;
+  const allPts=[]; lineGroups.forEach(g=>g.points.forEach(p=>allPts.push(p))); pinGroups.forEach(p=>allPts.push(p));
+  if(!allPts.length){ _travelMapGroups=null; return '<div class="empty"><span class="t">Nothing logged yet</span>Locations you log will plot here once you add stops or record a route.</div>'; }
+  _travelMapGroups={lineGroups, pinGroups};
+  const legendHtml = legend.length ? `<div class="maplegend" style="display:flex; flex-wrap:wrap; gap:10px; margin-top:10px;">${legend.map(l=>`<div style="display:flex; align-items:center; gap:5px; font-size:11px; color:var(--ink-soft);"><span style="width:9px;height:9px;border-radius:50%;background:${l.color};display:inline-block;"></span>${escapeHtml(l.name)}</div>`).join('')}</div>` : '';
+  return `<div id="livemap-travel" class="mapwidget" style="border:1px solid var(--line); border-radius:var(--radius-sm); overflow:hidden; height:400px; position:relative;"></div>${legendHtml}`;
 }
 
 /* ---------- ALL TRAVEL (combined view) ---------- */
@@ -1127,6 +1325,9 @@ function renderTrips(main){
   } else {
     wireTravelRowClicks(main);
   }
+  if(allTravelMode==='map' && _travelMapGroups){
+    initLiveMap('livemap-travel', _travelMapGroups.lineGroups, _travelMapGroups.pinGroups);
+  }
 }
 function buildMapsLink(stops){
   const pts=(stops||[]).filter(s=>s.lat!=null || (s.name&&s.name.trim()));
@@ -1161,6 +1362,7 @@ function openTripDetail(id){
       <button class="btn ghost" id="editTripBtn">Edit</button>
       <button class="btn danger" id="delTripBtn">Delete</button>
     </div>`;
+  mountTripMapWidget(t);
   if(mapsLink) document.getElementById('openMapsBtn').onclick=()=>window.open(mapsLink,'_blank');
   document.querySelectorAll('[data-open-track-from-trip]').forEach(el=>{
     el.addEventListener('click',(e)=>{
@@ -1410,17 +1612,14 @@ function openTrackDetail(id){
   const metaLine = t.distanceKm!=null
     ? `${fmtDate(t.startTs)} · ${t.distanceKm.toFixed(1)} km${hasRealTrack && t.startTs!==t.endTs?' · '+Math.max(1,Math.round((t.endTs-t.startTs)/60000))+' min':''}${stepCount?' · '+stepCount+' step'+(stepCount>1?'s':''):''}`
     : fmtDate(t.startTs);
-  const trackSvg = hasRealTrack ? buildSketchMapSvg(
-    [{points:t.points, color:'var(--terracotta)'}],
-    (t.stepPins||[]).map(s=>({lat:s.lat, lon:s.lon, color:'var(--terracotta-dark)', r:3}))
-  ) : null;
+  const trackMapId = hasRealTrack ? 'livemap-track-'+t.id : null;
   const ps = t.externalLink ? parsePolarstepsUrl(t.externalLink) : null;
   const canFetchPolarsteps = ps && POLARSTEPS_WORKER_URL && !hasRealTrack;
   document.getElementById('detailBody').innerHTML=`
     <h2>${escapeHtml(t.name)}</h2>
     <div class="meta" style="margin:8px 0;">${metaLine}</div>
     ${t.notes?`<p style="font-size:14px;">${escapeHtml(t.notes)}</p>`:''}
-    ${trackSvg ? `<div class="mapwidget" style="border:1px solid var(--line); border-radius:var(--radius-sm); overflow:hidden; margin-top:8px;">${trackSvg}</div>` : (t.linkLat!=null ? `<iframe src="https://www.google.com/maps?q=${t.linkLat},${t.linkLon}&z=12&output=embed" style="width:100%; height:160px; border:0; border-radius:12px; margin-top:8px;" loading="lazy"></iframe>` : (t.linkPreviewImage ? `
+    ${trackMapId ? `<div id="${trackMapId}" class="mapwidget" style="border:1px solid var(--line); border-radius:var(--radius-sm); overflow:hidden; margin-top:8px; height:220px; position:relative;"></div>` : (t.linkLat!=null ? `<iframe src="https://www.google.com/maps?q=${t.linkLat},${t.linkLon}&z=12&output=embed" style="width:100%; height:160px; border:0; border-radius:12px; margin-top:8px;" loading="lazy"></iframe>` : (t.linkPreviewImage ? `
     <div class="card" style="padding:0; overflow:hidden; margin-top:8px; margin-bottom:0;"><img src="${t.linkPreviewImage}" style="width:100%; max-height:180px; object-fit:cover; display:block;"></div>
     ${t.linkPreviewTitle?`<div class="meta" style="margin-top:6px; font-weight:700; color:var(--ink); font-size:13px;">${escapeHtml(t.linkPreviewTitle)}</div>`:''}
     ${t.linkPreviewDescription?`<div class="meta" style="margin-top:2px;">${escapeHtml(t.linkPreviewDescription)}</div>`:''}
@@ -1439,6 +1638,9 @@ function openTrackDetail(id){
       <button class="btn ghost" data-close>Close</button>
       <button class="btn danger" id="delTrack">Delete</button>
     </div>`;
+  if(trackMapId){
+    initLiveMap(trackMapId, [{points:t.points, color:'var(--terracotta)'}], (t.stepPins||[]).map(s=>({lat:s.lat, lon:s.lon, color:'var(--terracotta-dark)', r:3})));
+  }
   if(mapsLink) document.getElementById('openTrackMapsBtn').onclick=()=>window.open(mapsLink,'_blank');
   if(t.externalLink) document.getElementById('openTrackLinkBtn').onclick=()=>window.open(t.externalLink,'_blank');
   if(canFetchPolarsteps){
