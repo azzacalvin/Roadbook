@@ -447,6 +447,40 @@
   </div>
 </div>
 
+<!-- Email booking import sheet -->
+<div class="sheet" id="sheetEmailImport">
+  <button class="closebtn" data-close>✕</button>
+  <h2>Import booking from email</h2>
+  <div class="meta" id="emailImportSetupNotice" style="display:none; margin-bottom:10px;">Email import needs a one-time setup step (an AI-parsing Worker). Ask your assistant to help you set it up.</div>
+  <div class="field">
+    <label>Paste the confirmation email text</label>
+    <textarea id="emailImportText" placeholder="Paste the full booking confirmation email here..." style="min-height:140px;"></textarea>
+  </div>
+  <button class="btn ghost" id="emailImportParseBtn" style="width:100%;">Parse email</button>
+  <div id="emailImportPreview" style="display:none;">
+    <div class="field">
+      <label>Venue name</label>
+      <input type="text" id="emailImportPlace" placeholder="e.g. Reflections Forster Beach">
+    </div>
+    <div class="field">
+      <label>Check-in</label>
+      <input type="date" id="emailImportCheckIn">
+    </div>
+    <div class="field">
+      <label>Check-out</label>
+      <input type="date" id="emailImportCheckOut">
+    </div>
+    <div class="field">
+      <label>Total cost ($)</label>
+      <input type="number" id="emailImportAmount" step="0.01">
+    </div>
+  </div>
+  <div class="actions">
+    <button class="btn ghost" data-close>Cancel</button>
+    <button class="btn primary" id="emailImportSave" style="display:none;">Add to trip</button>
+  </div>
+</div>
+
 <!-- Detail / view sheet -->
 <div class="sheet" id="sheetDetail">
   <button class="closebtn" data-close>✕</button>
@@ -1540,6 +1574,7 @@ function openTripDetail(id){
     <div id="offlineMapSection-${t.id}"><div class="meta">Checking…</div></div>
     <div class="sectitle" style="margin-top:14px;">Stops</div>
     ${(t.stops||[]).map((s,i)=>`<div class="stoplistitem"><span class="num">${i+1}.</span><span class="nm">${escapeHtml(s.name)}${s.lat!=null?' 📍':''}</span></div>`).join('') || '<div class="meta">No stops added</div>'}
+    <button class="btn ghost" id="importEmailBtn" style="width:100%; margin-top:8px;">Import booking from email</button>
     ${mapsLink?`<button class="btn primary" id="openMapsBtn" style="width:100%; margin-top:10px;">Open planned route in Google Maps</button>`:''}
     <div class="sectitle" style="margin-top:14px;">Recorded routes${linkedTracks.length?' · '+totalTrackKm.toFixed(1)+' km':''}</div>
     ${linkedTracks.length ? linkedTracks.map(tr=>`<div class="stoplistitem" data-open-track-from-trip="${tr.id}">
@@ -1553,6 +1588,7 @@ function openTripDetail(id){
     </div>`;
   mountTripMapWidget(t);
   mountOfflineMapSection(t);
+  document.getElementById('importEmailBtn').onclick=()=>openEmailImportSheet(t.id);
   if(mapsLink) document.getElementById('openMapsBtn').onclick=()=>window.open(mapsLink,'_blank');
   document.querySelectorAll('[data-open-track-from-trip]').forEach(el=>{
     el.addEventListener('click',(e)=>{
@@ -1738,6 +1774,7 @@ function openPhotoDetail(id){
 /* ---------- link parsing / previews ---------- */
 const LINK_PREVIEW_WORKER_URL = '';
 const POLARSTEPS_WORKER_URL = 'https://roadbook-polarsteps.azzacalvin.workers.dev';
+const EMAIL_IMPORT_WORKER_URL = '';
 function parsePolarstepsUrl(url){
   if(!url) return null;
   try{
@@ -2055,6 +2092,78 @@ const NEARBY_PLACE_TAGS={
 function withTimeout(promise, ms){
   return Promise.race([promise, new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),ms))]);
 }
+
+/* ---------- email booking import ---------- */
+let emailImportTripId=null;
+async function geocodePlaceName(name){
+  if(!name) return null;
+  try{
+    const resp=await withTimeout(fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+encodeURIComponent(name)), 8000);
+    if(!resp.ok) return null;
+    const data=await resp.json();
+    if(!data.length) return null;
+    return {lat:parseFloat(data[0].lat), lon:parseFloat(data[0].lon)};
+  }catch(err){ return null; }
+}
+function openEmailImportSheet(tripId){
+  emailImportTripId=tripId;
+  document.getElementById('emailImportText').value='';
+  document.getElementById('emailImportPlace').value='';
+  document.getElementById('emailImportCheckIn').value='';
+  document.getElementById('emailImportCheckOut').value='';
+  document.getElementById('emailImportAmount').value='';
+  document.getElementById('emailImportPreview').style.display='none';
+  document.getElementById('emailImportSave').style.display='none';
+  const parseBtn=document.getElementById('emailImportParseBtn');
+  parseBtn.style.display='block'; parseBtn.disabled=false; parseBtn.textContent='Parse email';
+  document.getElementById('emailImportSetupNotice').style.display=EMAIL_IMPORT_WORKER_URL?'none':'block';
+  openSheet('sheetEmailImport');
+}
+document.getElementById('emailImportParseBtn').addEventListener('click', async()=>{
+  const text=document.getElementById('emailImportText').value.trim();
+  if(!text){ toast('Paste the email text first'); return; }
+  if(!EMAIL_IMPORT_WORKER_URL){ toast('Email import needs a one-time setup step first'); return; }
+  const btn=document.getElementById('emailImportParseBtn');
+  btn.disabled=true; btn.textContent='Parsing…';
+  try{
+    const resp=await withTimeout(fetch(EMAIL_IMPORT_WORKER_URL, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({text})}), 20000);
+    const data=await resp.json();
+    if(!resp.ok || data.error){ toast('Could not parse email — '+(data.error||'try again')); btn.disabled=false; btn.textContent='Parse email'; return; }
+    document.getElementById('emailImportPlace').value=data.placeName||'';
+    document.getElementById('emailImportCheckIn').value=data.checkIn||'';
+    document.getElementById('emailImportCheckOut').value=data.checkOut||'';
+    document.getElementById('emailImportAmount').value=data.amount!=null?data.amount:'';
+    document.getElementById('emailImportPreview').style.display='block';
+    document.getElementById('emailImportSave').style.display='block';
+    btn.style.display='none';
+  }catch(err){
+    toast('Could not reach the email-import worker — check your connection');
+    btn.disabled=false; btn.textContent='Parse email';
+  }
+});
+document.getElementById('emailImportSave').addEventListener('click', async()=>{
+  const trip=trips.find(x=>x.id===emailImportTripId); if(!trip) return;
+  const place=document.getElementById('emailImportPlace').value.trim();
+  const checkIn=document.getElementById('emailImportCheckIn').value;
+  const checkOut=document.getElementById('emailImportCheckOut').value;
+  const amount=parseFloat(document.getElementById('emailImportAmount').value);
+  if(!place){ toast('Enter a venue name'); return; }
+  const btn=document.getElementById('emailImportSave');
+  btn.disabled=true; btn.textContent='Saving…';
+  const geo=await geocodePlaceName(place);
+  trip.stops=trip.stops||[];
+  trip.stops.push({id:newId(), name:place, lat:geo?geo.lat:null, lon:geo?geo.lon:null});
+  trip.updatedAt=Date.now();
+  await idPut('trips', trip);
+  if(amount && amount>0){
+    const ts=checkIn ? new Date(checkIn+'T12:00:00').getTime() : Date.now();
+    const note='Imported from email'+(checkIn&&checkOut?` · ${checkIn} to ${checkOut}`:(checkIn?` · from ${checkIn}`:''));
+    const expense={id:newId(), ts, category:'Camp fees', amount, odo:null, note, lat:geo?geo.lat:null, lon:geo?geo.lon:null, place, photoIds:[]};
+    await idPut('expenses', expense);
+  }
+  await loadAll(); closeSheets(); toast('Booking added to trip'); scheduleSync();
+  openTripDetail(trip.id);
+});
 async function lookupNearbyPlace(lat, lon, category){
   const tags=NEARBY_PLACE_TAGS[category];
   if(!tags) return null;
