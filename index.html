@@ -498,7 +498,7 @@ function newId(){return Date.now().toString(36)+Math.random().toString(36).slice
 let entries=[], expenses=[], photos=[], tombstones=[], vehicles=[], trips=[], tracks=[];
 let activeTab='home';
 let moreView=null; // null | 'spend' | 'photos' | 'assistant' | 'backup' | 'travel'
-let allTravelMode='timeline'; // 'timeline' | 'bytrip' | 'map'
+let allTravelMode='list'; // 'list' | 'timeline' | 'bytrip' | 'map'
 let pendingGeo={log:null, spend:null, tripstop:null};
 let pendingPhotos=[];
 let pendingTripStops=[];
@@ -870,9 +870,9 @@ function tripColor(idx){
   return palette[idx % palette.length];
 }
 function entriesForTripRange(t){
-  if(!t.startDate || !t.endDate) return [];
+  if(!t.startDate) return [];
   const startTs=new Date(t.startDate+'T00:00:00').getTime();
-  const endTs=new Date(t.endDate+'T23:59:59').getTime();
+  const endTs=t.endDate ? new Date(t.endDate+'T23:59:59').getTime() : Date.now();
   return entries.filter(e=>e.ts>=startTs && e.ts<=endTs);
 }
 function tripMapGroups(t, color){
@@ -958,13 +958,8 @@ function renderTravelByTrip(){
   sortedTrips.forEach(t=>{
     const tTracks = tracks.filter(tr=>tr.tripId===t.id);
     tTracks.forEach(tr=>usedTrackIds.add(tr.id));
-    let tEntries = [];
-    if(t.startDate && t.endDate){
-      const startTs = new Date(t.startDate+'T00:00:00').getTime();
-      const endTs = new Date(t.endDate+'T23:59:59').getTime();
-      tEntries = entries.filter(e=>e.ts>=startTs && e.ts<=endTs);
-      tEntries.forEach(e=>usedEntryIds.add(e.id));
-    }
+    const tEntries = entriesForTripRange(t);
+    tEntries.forEach(e=>usedEntryIds.add(e.id));
     html += `<div class="sectitle" style="margin-top:14px; cursor:pointer;" data-open-trip-travel="${t.id}">${escapeHtml(t.name)} <span class="badge ${t.status}" style="margin-left:6px;">${t.status}</span></div>`;
     if(!tTracks.length && !tEntries.length){
       html += '<div class="meta" style="margin-bottom:8px;">Nothing logged for this trip yet</div>';
@@ -1013,10 +1008,8 @@ function renderMore(main){
   if(moreView==='photos') return renderPhotos(main);
   if(moreView==='assistant') return renderAssistant(main);
   if(moreView==='backup') return renderBackup(main);
-  if(moreView==='travel') return renderAllTravel(main);
   main.innerHTML = `
     <div class="sectitle">More</div>
-    <div class="menurow" data-view="travel"><div class="left"><span class="ic">🧭</span><span class="label">All Travel</span></div><span class="chev">›</span></div>
     <div class="menurow" data-view="spend"><div class="left"><span class="ic">💵</span><span class="label">Spend</span></div><span class="chev">›</span></div>
     <div class="menurow" data-view="photos"><div class="left"><span class="ic">📷</span><span class="label">Photos</span></div><span class="chev">›</span></div>
     <div class="menurow" data-view="assistant"><div class="left"><span class="ic">💬</span><span class="label">Assistant</span></div><span class="chev">›</span></div>
@@ -1099,21 +1092,40 @@ async function saveVehicle(kind, key, value){
 }
 
 /* ---------- TRIPS ---------- */
-function renderTrips(main){
+function renderTripsList(){
   if(!trips.length){
-    main.innerHTML='<div class="empty"><span class="t">No trips yet</span>Tap + to plan your first trip.</div>';
-    return;
+    return '<div class="empty"><span class="t">No trips yet</span>Tap + to plan your first trip.</div>';
   }
-  main.innerHTML = trips.map(t=>`<div class="tripcard" data-open-trip="${t.id}">
+  return trips.map(t=>`<div class="tripcard" data-open-trip="${t.id}">
     <div class="toprow">
       <div><div class="name">${escapeHtml(t.name)}</div><div class="dates">${t.startDate?fmtDate(new Date(t.startDate).getTime()):''}${t.endDate?' – '+fmtDate(new Date(t.endDate).getTime()):''}</div></div>
       <span class="badge ${t.status}">${t.status}</span>
     </div>
     <div class="stopcount">${(t.stops||[]).length} stop${(t.stops||[]).length===1?'':'s'}</div>
   </div>`).join('');
-  main.querySelectorAll('[data-open-trip]').forEach(el=>{
-    el.addEventListener('click',()=>openTripDetail(el.dataset.openTrip));
+}
+function renderTrips(main){
+  const toggle = `<div class="typegrid" style="grid-template-columns:repeat(4,1fr); margin-bottom:14px;" id="tripsModeGrid">
+    <button data-mode="list" class="${allTravelMode==='list'?'selected':''}">Trips</button>
+    <button data-mode="timeline" class="${allTravelMode==='timeline'?'selected':''}">Timeline</button>
+    <button data-mode="bytrip" class="${allTravelMode==='bytrip'?'selected':''}">By Trip</button>
+    <button data-mode="map" class="${allTravelMode==='map'?'selected':''}">Map</button>
+  </div>`;
+  const body = allTravelMode==='timeline' ? renderTravelTimeline()
+    : allTravelMode==='bytrip' ? renderTravelByTrip()
+    : allTravelMode==='map' ? renderTravelMap()
+    : renderTripsList();
+  main.innerHTML = toggle + body;
+  main.querySelectorAll('#tripsModeGrid button').forEach(b=>{
+    b.addEventListener('click',()=>{ allTravelMode=b.dataset.mode; renderTrips(main); });
   });
+  if(allTravelMode==='list'){
+    main.querySelectorAll('[data-open-trip]').forEach(el=>{
+      el.addEventListener('click',()=>openTripDetail(el.dataset.openTrip));
+    });
+  } else {
+    wireTravelRowClicks(main);
+  }
 }
 function buildMapsLink(stops){
   const pts=(stops||[]).filter(s=>s.lat!=null || (s.name&&s.name.trim()));
