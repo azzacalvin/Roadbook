@@ -87,6 +87,8 @@
   }
   .statchip .val{font-size:16px; font-weight:800;}
   .statchip .lbl{font-size:9.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:0.06em; margin-top:1px;}
+  .statrow.wrap{flex-wrap:wrap;}
+  .statrow.wrap .statchip{flex:1 1 27%; min-width:64px;}
 
   .sectitle{font-size:13px; font-weight:800; margin:6px 2px 8px; color:var(--ink);}
 
@@ -779,6 +781,22 @@ function renderLog(main){
 
 /* ---------- SPEND (inside More) ---------- */
 function renderSpend(main){
+  const CAT_ORDER = ['Fuel','Camp fees','Food','Repairs','Other'];
+  const totalsByCat = {};
+  CAT_ORDER.forEach(c=>{ totalsByCat[c]=0; });
+  let totalSpend = 0;
+  expenses.forEach(e=>{
+    const amt = parseFloat(e.amount)||0;
+    totalSpend += amt;
+    if(totalsByCat[e.category]!=null) totalsByCat[e.category] += amt;
+  });
+  const catChips = CAT_ORDER.filter(c=>totalsByCat[c]>0).map(c=>
+    `<div class="statchip"><div class="val" style="color:${catColor(c)}">$${Math.round(totalsByCat[c])}</div><div class="lbl">${c}</div></div>`
+  ).join('');
+  const summary = expenses.length ? `<div class="statrow wrap">
+    <div class="statchip"><div class="val">$${Math.round(totalSpend)}</div><div class="lbl">Total</div></div>
+    ${catChips}
+  </div>` : '';
   const list = !expenses.length ? '<div class="empty"><span class="t">No expenses yet</span>Tap + to log fuel, camp fees, food, or repairs.</div>' :
     expenses.map(e=>{
       const loc = e.place ? e.place : (e.lat!=null ? `${e.lat.toFixed(4)}, ${e.lon.toFixed(4)}` : '');
@@ -799,7 +817,7 @@ function renderSpend(main){
         <div class="amount">$${parseFloat(e.amount).toFixed(2)}</div>
       </div>`;
     }).join('');
-  main.innerHTML = backRow('More') + '<div class="sectitle">Spend</div>' + list;
+  main.innerHTML = backRow('More') + '<div class="sectitle">Spend</div>' + summary + list;
   wireBackRow(main);
   main.querySelectorAll('[data-open-expense]').forEach(el=>{
     el.addEventListener('click',()=>openExpenseDetail(el.dataset.openExpense));
